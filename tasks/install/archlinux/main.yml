@@ -1,0 +1,7 @@
+- name: "Install the 'bitwarden-cli' application package"
+  ansible.builtin.package:
+    name: bitwarden-cli
+    state: present
+  become: true
+  become_user: root
+

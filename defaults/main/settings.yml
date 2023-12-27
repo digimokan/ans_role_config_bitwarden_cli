@@ -1,0 +1,3 @@
+# email address (i.e. login / user-name) of main Bitwarden CLI user
+bitwarden_cli_user_email_addr: ''
+

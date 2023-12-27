@@ -1,0 +1,8 @@
+- name: "Install Bitwarden CLI application for Arch Linux"
+  ansible.builtin.include_tasks: archlinux/main.yml
+  when: ansible_os_family == "Archlinux"
+
+- name: "Install Bitwarden CLI application for FreeBSD"
+  ansible.builtin.include_tasks: freebsd/main.yml
+  when: ansible_os_family == "FreeBSD"
+
