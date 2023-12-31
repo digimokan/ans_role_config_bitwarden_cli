@@ -1,0 +1,4 @@
+# check if FreeBSD Linux Binary-Compatibility Layer is running
+# Note: required to run FreeBSD Bitwarden CLI app
+bitwarden_check_freebsd_linux_compat_cmd: 'false'
+

@@ -9,6 +9,7 @@ Install and configure the Bitwarden CLI password manager utility.
 
 * [Purpose](#purpose)
 * [Supported Operating Systems](#supported-operating-systems)
+* [Dependencies](#dependencies)
 * [Quick Start](#quick-start)
     * [Use From Playbook](#use-from-playbook)
 * [Role Options](#role-options)
@@ -25,6 +26,11 @@ Install and configure the Bitwarden CLI password manager utility.
 
 * Arch Linux
 * FreeBSD
+
+## Dependencies
+
+* FreeBSD Linux Binary-Compatibility Layer service is running (required for
+  FreeBSD Bitwarden CLI app, checked via [var](../defaults/main/os/freebsd.yml)).
 
 ## Quick Start
 
@@ -67,7 +73,7 @@ See the role `defaults` files for main role vars listings:
 
 Define these _required_ vars for the role:
 
-  * `bitwarden_cli_user_name`: user name of main Bitwarden CLI user
+  * `bitwarden_check_freebsd_linux_compat_cmd`: check linux compat (for FreeBSD)
 
 ## Contributing
 
