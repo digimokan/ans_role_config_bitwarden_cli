@@ -1,0 +1,12 @@
+- name: "Create '{{ do_bitwarden_cli_script_path }}' utility script"
+  ansible.builtin.template:
+    dest: "{{ do_bitwarden_cli_script_path }}"
+    src: "do_bitwarden_cli.j2"
+    owner: 'root'
+    mode: '755'
+    force: true
+  vars:
+    do_bitwarden_cli_script_path: "/usr/local/bin/{{ bitwarden_cli_utility_script_file_name }}"
+  become: true
+  become_user: root
+
