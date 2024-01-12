@@ -218,9 +218,10 @@ login_to_bitwarden_as_req() {
   cmd="${bitwarden_cli_cmd}"
   addr="${bitwarden_user_email_address}"
   msg='Logging in and unlocking Bitwarden vault...'
+  save_file="${session_key_save_file_path}"
   try_with_fallback \
-    "${cmd} login --check" \
-    "echo \"${msg}\"; ${cmd} login ${addr}" \
+    "${cmd} login --raw --check" \
+    "echo \"${msg}\"; ${cmd} login --raw ${addr} > \"${save_file}\"" \
     "Bitwarden CLI error attempting to login" 10
 }
 
@@ -230,15 +231,15 @@ login_to_bitwarden_and_unlock_vault_as_req() {
 }
 
 do_print_entry_and_copy_pswd() {
-  echo "do_print_entry_and_copy_pswd srch_text: \"${srch_text}\""
+  login_to_bitwarden_and_unlock_vault_as_req "$@"
 }
 
 do_print_entry() {
-  echo "do_print_entry srch_text: \"${srch_text}\""
+  login_to_bitwarden_and_unlock_vault_as_req "$@"
 }
 
 do_copy_entry_pswd() {
-  echo "do_copy_entry_pswd srch_text: \"${srch_text}\""
+  login_to_bitwarden_and_unlock_vault_as_req "$@"
 }
 
 do_logout_and_lock_vault() {
@@ -250,7 +251,6 @@ do_logout_and_lock_vault() {
 main() {
   get_cmd_opts "$@"
   get_cmd_args "$@"
-  login_to_bitwarden_and_unlock_vault_as_req "$@"
   if [ "${print_entry_and_copy_pswd}" = 'true' ]; then
     do_print_entry_and_copy_pswd "$@"
   elif [ "${print_entry}" = 'true' ]; then
