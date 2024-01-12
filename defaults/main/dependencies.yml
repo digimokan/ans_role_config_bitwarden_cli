@@ -1,9 +1,9 @@
 # command to run to execute the jq json-parsing utility
-bitwarden_exec_jq_cmd: 'false'
+bitwarden_cli_exec_jq_cmd: 'false'
 
 # command to run to execute the xsel clipboard utility
-bitwarden_exec_xsel_cmd: 'false'
+bitwarden_cli_exec_xsel_cmd: 'false'
 
 # command to run to execute the fzf fuzzy-finder utility
-bitwarden_exec_fzf_cmd: 'false'
+bitwarden_cli_exec_fzf_cmd: 'false'
 

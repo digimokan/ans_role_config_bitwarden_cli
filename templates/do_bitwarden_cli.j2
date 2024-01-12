@@ -1,3 +1,269 @@
------BEGIN EC PRIVATE KEY-----
-{{ syncthing_local_machine_private_key }}
------END EC PRIVATE KEY-----
+#!/bin/sh
+# vim: set filetype=sh:
+
+################################################################################
+# purpose:   wrap the official Bitwarden CLI utility with a helper script
+# args/opts: see usage (run with -h option)
+# meta:      script installed by ansible {{ role_name | basename }}
+################################################################################
+
+# GLOBAL VARS:
+
+# User Cmd Option Selections
+print_entry_and_copy_pswd='false'
+print_entry='false'
+copy_entry_pswd='false'
+logout_and_lock_vault='false'
+
+# User Cmd Option Args
+srch_text=''
+
+# Hard-Coded Settings
+session_key_save_file_path='/tmp/bitwarden_cli/session_key.txt'
+bitwarden_user_email_address='{{ bitwarden_cli_user_email_addr }}'
+bitwarden_cli_cmd='bw'
+
+print_usage() {
+  echo 'USAGE:'
+  echo "  $(basename "${0}")  -h"
+  echo "  $(basename "${0}")  [-R <addr>]    [srch_text]"
+  echo "  $(basename "${0}")  [-R <addr>] -s [srch_text]"
+  echo "  $(basename "${0}")  [-R <addr>] -p [srch_text]"
+  echo "  $(basename "${0}")  [-R <addr>] -c [srch_text]"
+  echo "  $(basename "${0}")  -x"
+  echo 'ARGUMENTS:'
+  echo '  [srch_text]'
+  echo '      search for entry, print it, and copy password to clipboard'
+  echo 'OPTIONS:'
+  echo '  -h, --help'
+  echo '      print this help message'
+  echo '  -s [srch_text], --print-entry-and-copy-pswd[=srch_text]'
+  echo '      search for entry, print it, and copy password to clipboard'
+  echo '  -p [srch_text], --print-entry[=srch_text]'
+  echo '      search for entry, and print it'
+  echo '  -c [srch_text], --copy-entry-pswd[=srch_text]'
+  echo '      search for entry, and copy password to clipboard'
+  echo '  -R <addr>, --bitwarden-login-email-addr=<addr>'
+  echo "      email address used to log in to bitwarden (default \"${bitwarden_user_email_address}\")"
+  echo '  -x, --logout-and-lock-vault'
+  echo '      logout and lock vault (Note: vault remains unlocked between user logins)'
+  echo 'EXIT CODES:'
+  echo '    0  ok'
+  echo '    1  usage, arguments, or options error'
+  echo '    5  Bitwarden CLI operation error'
+  echo '   10  Bitwarden CLI vault login/unlock error'
+  echo '  255  unknown error'
+  exit "${1}"
+}
+
+get_cmd_opts() {
+  while getopts ':hs:p:c:R:x-:' option; do
+    short_opt_arg="${OPTARG}"
+    case "${option}" in
+      h)  handle_help ;;
+      s)  handle_print_entry_and_copy_pswd "${short_opt_arg}" ;;
+      p)  handle_print_entry "${short_opt_arg}" ;;
+      c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
+      R)  handle_copy_entry_pswd "${short_opt_arg}" ;;
+      x)  handle_logout_and_lock_vault ;;
+      -)  long_opt_name="${OPTARG}"
+          long_opt_arg="${OPTARG#*=}"
+          case ${long_opt_name} in
+            help)                           handle_help ;;
+            help=*)                         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            print-entry-and-copy-pswd=?*)   handle_print_entry_and_copy_pswd "${long_opt_arg}" ;;
+            print-entry-and-copy-pswd*)     handle_print_entry_and_copy_pswd ;;
+            print-entry=?*)                 handle_print_entry "${long_opt_arg}" ;;
+            print-entry*)                   handle_print_entry ;;
+            copy-entry-pswd=?*)             handle_copy_entry_pswd "${long_opt_arg}" ;;
+            copy-entry-pswd*)               handle_copy_entry_pswd ;;
+            bitwarden-login-email-addr=?*)  handle_bitwarden_login_email_addr "${long_opt_arg}" ;;
+            bitwarden-login-email-addr*)    handle_missing_long_option_arg "${long_opt_name}" ;;
+            logout-and-lock-vault=?*)       handle_logout_and_lock_vault ;;
+            logout-and-lock-vault*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            '')                             break ;; # non-option arg starting with '-'
+            *)                              handle_unknown_option "${long_opt_name}" ;;
+          esac ;;
+      \?) handle_unknown_option "${short_opt_arg}" ;;
+    esac
+  done
+}
+
+get_cmd_args() {
+  shift $((OPTIND - 1))
+  possible_cmd_arg="${1}"
+  if [ "${possible_cmd_arg}" != '' ]; then
+    if [ "${srch_text}" = '' ]; then
+      srch_text="${1}"
+    else
+      err_msg="don't specify srch_text as both option arg and cmd arg"
+      quit_err_msg_with_help "${err_msg}" 1
+    fi
+  fi
+}
+
+print_err_msg() {
+  echo 'ERROR:'
+  printf "$(basename "${0}"): %s\\n\\n" "${1}"
+}
+
+quit_err_msg() {
+  print_err_msg "${1}"
+  exit "${2}"
+}
+
+quit_err_msg_with_help() {
+  print_err_msg "${1}"
+  print_usage "${2}"
+}
+
+handle_unknown_option() {
+  short_opt_letter_or_long_opt_name="${1}"
+  err_msg="unknown option \"${short_opt_letter_or_long_opt_name}\""
+  quit_err_msg_with_help "${err_msg}" 1
+}
+
+handle_illegal_long_option_arg() {
+  long_opt_name="${1}"
+  err_msg="illegal argument in \"${1}\""
+  quit_err_msg_with_help "${err_msg}" 1
+}
+
+handle_missing_long_option_arg() {
+  long_opt_name="${1}"
+  err_msg="missing argument for option \"${long_opt_name}\""
+  quit_err_msg_with_help "${err_msg}" 1
+}
+
+handle_help() {
+  print_usage 0
+}
+
+handle_print_entry_and_copy_pswd() {
+  if [ "${print_entry}" = 'true' ] || \
+     [ "${copy_entry_pswd}" = 'true' ] || \
+     [ "${logout_and_lock_vault}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+
+  print_entry_and_copy_pswd='true'
+  srch_text="${1}"
+}
+
+handle_print_entry() {
+  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+     [ "${copy_entry_pswd}" = 'true' ] || \
+     [ "${logout_and_lock_vault}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+  print_entry='true'
+  srch_text="${1}"
+}
+
+handle_copy_entry_pswd() {
+  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+     [ "${print_entry}" = 'true' ] || \
+     [ "${logout_and_lock_vault}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+  copy_entry_pswd='true'
+  srch_text="${1}"
+}
+
+handle_logout_and_lock_vault() {
+  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+     [ "${print_entry}" = 'true' ] || \
+     [ "${copy_entry_pswd}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+  logout_and_lock_vault='true'
+}
+
+try_with_exit() {
+  cmd="${1}"
+  err_msg="${2}"
+  err_code="${3}"
+  eval "${cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    quit_err_msg_with_help "${err_msg}" "${err_code}"
+  fi
+}
+
+try_with_fallback() {
+  try_cmd="${1}"
+  fallback_cmd="${2}"
+  err_msg="${3}"
+  err_code="${4}"
+  eval "${try_cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    eval "${fallback_cmd}"
+    exit_code="${?}"
+    if [ "${exit_code}" != 0 ]; then
+      quit_err_msg "${err_msg}" "${err_code}"
+    fi
+  fi
+}
+
+create_session_key_save_file_as_req() {
+  if [ ! -f "${session_key_save_file_path}" ]; then
+    session_key_save_file_dir=$(dirname "${session_key_save_file_path}")
+    mkdir -p "${session_key_save_file_dir}"
+    printf "%s" 'NoSessionKeyYet' > "${session_key_save_file_path}"
+  fi
+}
+
+login_to_bitwarden_as_req() {
+  cmd="${bitwarden_cli_cmd}"
+  addr="${bitwarden_user_email_address}"
+  msg='Logging in and unlocking Bitwarden vault...'
+  try_with_fallback \
+    "${cmd} login --check" \
+    "echo \"${msg}\"; ${cmd} login ${addr}" \
+    "Bitwarden CLI error attempting to login" 10
+}
+
+login_to_bitwarden_and_unlock_vault_as_req() {
+  create_session_key_save_file_as_req "$@"
+  login_to_bitwarden_as_req "$@"
+}
+
+do_print_entry_and_copy_pswd() {
+  echo "do_print_entry_and_copy_pswd srch_text: \"${srch_text}\""
+}
+
+do_print_entry() {
+  echo "do_print_entry srch_text: \"${srch_text}\""
+}
+
+do_copy_entry_pswd() {
+  echo "do_copy_entry_pswd srch_text: \"${srch_text}\""
+}
+
+do_logout_and_lock_vault() {
+  try_with_exit \
+    "${bitwarden_cli_cmd} logout" \
+    "Bitwarden CLI error attempting to logout" 5
+}
+
+main() {
+  get_cmd_opts "$@"
+  get_cmd_args "$@"
+  login_to_bitwarden_and_unlock_vault_as_req "$@"
+  if [ "${print_entry_and_copy_pswd}" = 'true' ]; then
+    do_print_entry_and_copy_pswd "$@"
+  elif [ "${print_entry}" = 'true' ]; then
+    do_print_entry "$@"
+  elif [ "${copy_entry_pswd}" = 'true' ]; then
+    do_copy_entry_pswd "$@"
+  elif [ "${logout_and_lock_vault}" = 'true' ]; then
+    do_logout_and_lock_vault "$@"
+  else
+    do_print_entry_and_copy_pswd "$@"
+  fi
+  exit 0
+}
+
+main "$@"
+
