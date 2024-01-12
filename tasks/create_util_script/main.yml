@@ -6,7 +6,7 @@
     mode: '755'
     force: true
   vars:
-    do_bitwarden_cli_script_path: "/usr/local/bin/{{ bitwarden_cli_utility_script_file_name }}"
+    do_bitwarden_cli_script_path: "/usr/local/bin/{{ bitwarden_cli_utility_script_main_cmd }}"
   become: true
   become_user: root
 

@@ -62,7 +62,8 @@ Install and configure the Bitwarden CLI password manager utility.
          ansible.builtin.include_role:
            name: ans_role_config_bitwarden_cli
          vars:
-           bitwarden_cli_user_email_addr: "user2@google.com"
+           bitwarden_cli_api_key_client_id: "some-api-key-client-id"
+           bitwarden_cli_api_key_client_secret: "some-api-key-client-secret"
            bitwarden_cli_exec_jq_cmd: "jq"
            bitwarden_cli_exec_xsel_cmd: "xsel"
            bitwarden_cli_exec_fzf_cmd: "fzf"

@@ -1,6 +1,9 @@
 # the role will create a Bitwarden CLI utility script with this name
-bitwarden_cli_utility_script_file_name: 'do_bitwarden_cli.sh'
+bitwarden_cli_utility_script_main_cmd: 'do_bitwarden_cli.sh'
 
-# email address (i.e. login / user-name) of main Bitwarden CLI user
-bitwarden_cli_user_email_addr: ''
+# Bitwarden user API Key Client ID, req for login (obtain on Bitwarden website)
+bitwarden_cli_api_key_client_id: ''
+
+# Bitwarden user API Key Client Secret, req for login (obtain on Bitwarden website)
+bitwarden_cli_api_key_client_secret: ''
 

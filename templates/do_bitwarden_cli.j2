@@ -20,16 +20,17 @@ srch_text=''
 
 # Hard-Coded Settings
 session_key_save_file_path='/tmp/bitwarden_cli/session_key.txt'
-bitwarden_user_email_address='{{ bitwarden_cli_user_email_addr }}'
+login_api_key_client_id='{{ bitwarden_cli_api_key_client_id }}'
+login_api_key_client_secret='{{ bitwarden_cli_api_key_client_secret }}'
 bitwarden_cli_cmd='bw'
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  $(basename "${0}")  [-R <addr>]    [srch_text]"
-  echo "  $(basename "${0}")  [-R <addr>] -s [srch_text]"
-  echo "  $(basename "${0}")  [-R <addr>] -p [srch_text]"
-  echo "  $(basename "${0}")  [-R <addr>] -c [srch_text]"
+  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]     [srch_text]"
+  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -s [srch_text]"
+  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -p [srch_text]"
+  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -c [srch_text]"
   echo "  $(basename "${0}")  -x"
   echo 'ARGUMENTS:'
   echo '  [srch_text]'
@@ -43,10 +44,12 @@ print_usage() {
   echo '      search for entry, and print it'
   echo '  -c [srch_text], --copy-entry-pswd[=srch_text]'
   echo '      search for entry, and copy password to clipboard'
-  echo '  -R <addr>, --bitwarden-login-email-addr=<addr>'
-  echo "      email address used to log in to bitwarden (default \"${bitwarden_user_email_address}\")"
   echo '  -x, --logout-and-lock-vault'
   echo '      logout and lock vault (Note: vault remains unlocked between user logins)'
+  echo '  -I <id>, --login-api-key-client-id=<id>'
+  echo "      API key client id used to log in to bitwarden (default \"${login_api_key_client_id}\")"
+  echo '  -T <secret>, --login-api-key-client-secret=<secret>'
+  echo "      API key client secret used to log in to bitwarden (default \"${login_api_key_client_secret}\")"
   echo 'EXIT CODES:'
   echo '    0  ok'
   echo '    1  usage, arguments, or options error'
@@ -57,15 +60,16 @@ print_usage() {
 }
 
 get_cmd_opts() {
-  while getopts ':hs:p:c:R:x-:' option; do
+  while getopts ':hs:p:c:xI:T:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  handle_help ;;
       s)  handle_print_entry_and_copy_pswd "${short_opt_arg}" ;;
       p)  handle_print_entry "${short_opt_arg}" ;;
       c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
-      R)  handle_copy_entry_pswd "${short_opt_arg}" ;;
       x)  handle_logout_and_lock_vault ;;
+      I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
+      T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
@@ -77,10 +81,12 @@ get_cmd_opts() {
             print-entry*)                   handle_print_entry ;;
             copy-entry-pswd=?*)             handle_copy_entry_pswd "${long_opt_arg}" ;;
             copy-entry-pswd*)               handle_copy_entry_pswd ;;
-            bitwarden-login-email-addr=?*)  handle_bitwarden_login_email_addr "${long_opt_arg}" ;;
-            bitwarden-login-email-addr*)    handle_missing_long_option_arg "${long_opt_name}" ;;
             logout-and-lock-vault=?*)       handle_logout_and_lock_vault ;;
             logout-and-lock-vault*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            login-api-key-client-id=?*)     handle_login_api_key_client_id "${long_opt_arg}" ;;
+            login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
+            login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
+            login-api-key-client-secret*)   handle_missing_long_option_arg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
             *)                              handle_unknown_option "${long_opt_name}" ;;
           esac ;;
@@ -179,6 +185,14 @@ handle_logout_and_lock_vault() {
   logout_and_lock_vault='true'
 }
 
+handle_login_api_key_client_id() {
+  login_api_key_client_id="${1}"
+}
+
+handle_login_api_key_client_secret() {
+  login_api_key_client_secret="${1}"
+}
+
 try_with_exit() {
   cmd="${1}"
   err_msg="${2}"
@@ -215,13 +229,20 @@ create_session_key_save_file_as_req() {
 }
 
 login_to_bitwarden_as_req() {
-  cmd="${bitwarden_cli_cmd}"
-  addr="${bitwarden_user_email_address}"
-  msg='Logging in and unlocking Bitwarden vault...'
-  save_file="${session_key_save_file_path}"
+  # for unlock.............
+  # save_file="${session_key_save_file_path}"
+  # login_cmd="echo \"${msg}\"; ${bw_cmd} login --raw ${addr} > \"${save_file}\""
+
+  run_login_check_cmd="${bitwarden_cli_cmd} login --raw --check"
+
+  show_msg='echo "Logging in and unlocking Bitwarden vault..."'
+  set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
+  login_to_bw="${bitwarden_cli_cmd} login --raw --apikey"
+  run_login_cmd="${show_msg}; ${set_api_key} ${login_to_bw}"
+
   try_with_fallback \
-    "${cmd} login --raw --check" \
-    "echo \"${msg}\"; ${cmd} login --raw ${addr} > \"${save_file}\"" \
+    "${run_login_check_cmd}" \
+    "${run_login_cmd}" \
     "Bitwarden CLI error attempting to login" 10
 }
 
