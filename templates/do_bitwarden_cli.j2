@@ -229,13 +229,9 @@ create_session_key_save_file_as_req() {
 }
 
 login_to_bitwarden_as_req() {
-  # for unlock.............
-  # save_file="${session_key_save_file_path}"
-  # login_cmd="echo \"${msg}\"; ${bw_cmd} login --raw ${addr} > \"${save_file}\""
-
   run_login_check_cmd="${bitwarden_cli_cmd} login --check 1> /dev/null 2>&1"
 
-  show_msg='echo "Logging in and unlocking Bitwarden vault..."'
+  show_msg='echo "Logging in to Bitwarden vault..."'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
   login_to_bw="${bitwarden_cli_cmd} login --raw --apikey"
   run_login_cmd="${show_msg}; ${set_api_key} ${login_to_bw}"
@@ -246,9 +242,24 @@ login_to_bitwarden_as_req() {
     "Bitwarden CLI error attempting to login" 10
 }
 
+unlock_bitwarden_vault_as_req() {
+  session_key=$(cat "${session_key_save_file_path}")
+  run_unlock_check_cmd="${bitwarden_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
+
+  show_msg='echo "Unlocking Bitwarden vault..."'
+  unlock_bw_vault="${bitwarden_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
+  run_unlock_cmd="${show_msg}; ${unlock_bw_vault}"
+
+  try_with_fallback \
+    "${run_unlock_check_cmd}" \
+    "${run_unlock_cmd}" \
+    "Bitwarden CLI error attempting to unlock vault" 10
+}
+
 login_to_bitwarden_and_unlock_vault_as_req() {
   create_session_key_save_file_as_req "$@"
   login_to_bitwarden_as_req "$@"
+  unlock_bitwarden_vault_as_req "$@"
 }
 
 do_print_entry_and_copy_pswd() {
@@ -264,6 +275,7 @@ do_copy_entry_pswd() {
 }
 
 do_logout_and_lock_vault() {
+  # Note: logging out automatically locks the vault and invalidates session key
   echo "Logging out and locking Bitwarden vault..."
   ${bitwarden_cli_cmd} logout 1> /dev/null 2>&1
 
