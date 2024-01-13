@@ -233,7 +233,7 @@ login_to_bitwarden_as_req() {
   # save_file="${session_key_save_file_path}"
   # login_cmd="echo \"${msg}\"; ${bw_cmd} login --raw ${addr} > \"${save_file}\""
 
-  run_login_check_cmd="${bitwarden_cli_cmd} login --raw --check"
+  run_login_check_cmd="${bitwarden_cli_cmd} login --check 1> /dev/null 2>&1"
 
   show_msg='echo "Logging in and unlocking Bitwarden vault..."'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
@@ -264,8 +264,12 @@ do_copy_entry_pswd() {
 }
 
 do_logout_and_lock_vault() {
+  show_msg='echo "Logging out and locking Bitwarden vault..."'
+  logout_of_bw="${bitwarden_cli_cmd} logout 1> /dev/null 2>&1"
+  run_logout_cmd="${show_msg}; ${logout_of_bw}"
+
   try_with_exit \
-    "${bitwarden_cli_cmd} logout" \
+    "${run_logout_cmd}" \
     "Bitwarden CLI error attempting to logout" 5
 }
 
