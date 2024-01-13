@@ -200,7 +200,7 @@ try_with_exit() {
   eval "${cmd}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    quit_err_msg_with_help "${err_msg}" "${err_code}"
+    quit_err_msg "${err_msg}" "${err_code}"
   fi
 }
 
@@ -264,13 +264,15 @@ do_copy_entry_pswd() {
 }
 
 do_logout_and_lock_vault() {
-  show_msg='echo "Logging out and locking Bitwarden vault..."'
-  logout_of_bw="${bitwarden_cli_cmd} logout 1> /dev/null 2>&1"
-  run_logout_cmd="${show_msg}; ${logout_of_bw}"
+  echo "Logging out and locking Bitwarden vault..."
+  ${bitwarden_cli_cmd} logout 1> /dev/null 2>&1
 
-  try_with_exit \
-    "${run_logout_cmd}" \
-    "Bitwarden CLI error attempting to logout" 5
+  exit_code="${?}"
+  if [ "${exit_code}" = 1 ]; then
+    echo "Already logged out."
+  elif [ "${exit_code}" != 0 ]; then
+    quit_err_msg "Bitwarden CLI error attempting to logout" 5
+  fi
 }
 
 main() {
