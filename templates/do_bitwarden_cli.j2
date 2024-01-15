@@ -2,14 +2,16 @@
 # vim: set filetype=sh:
 
 ################################################################################
-# purpose:   wrap the official Bitwarden CLI utility with a helper script
-# args/opts: see usage (run with -h option)
-# meta:      script installed by ansible {{ role_name | basename }}
+# Purpose:   1. Wrap the official Bitwarden CLI utility with a helper script.
+#            2. Keep Bitwarden vault login persistent between user logins.
+# Args/Opts: See usage (run with -h option).
+# Meta:      Script installed by ansible {{ role_name | basename }}.
 ################################################################################
 
 # GLOBAL VARS:
 
 # User Cmd Option Selections
+print_help_menu='false'
 print_entry_and_copy_pswd='false'
 print_entry='false'
 copy_entry_pswd='false'
@@ -19,19 +21,22 @@ logout_and_lock_vault='false'
 srch_text=''
 
 # Hard-Coded Settings
+prog_name="$(basename "${0}")"
 session_key_save_file_path='/tmp/bitwarden_cli/session_key.txt'
 login_api_key_client_id='{{ bitwarden_cli_api_key_client_id }}'
 login_api_key_client_secret='{{ bitwarden_cli_api_key_client_secret }}'
-bitwarden_cli_cmd='bw'
+bw_cli_cmd='bw'
+
+# LOCAL FUNCTIONS:
 
 print_usage() {
   echo 'USAGE:'
-  echo "  $(basename "${0}")  -h"
-  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]     [srch_text]"
-  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -s [srch_text]"
-  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -p [srch_text]"
-  echo "  $(basename "${0}")  [-I <id>]  [-T <secret>]  -c [srch_text]"
-  echo "  $(basename "${0}")  -x"
+  echo "  ${prog_name}  -h"
+  echo "  ${prog_name}  [-I <id>]  [-T <secret>]     [srch_text]"
+  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -s [srch_text]"
+  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -p [srch_text]"
+  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -c [srch_text]"
+  echo "  ${prog_name}  -x"
   echo 'ARGUMENTS:'
   echo '  [srch_text]'
   echo '      search for entry, print it, and copy password to clipboard'
@@ -56,14 +61,13 @@ print_usage() {
   echo '    5  Bitwarden CLI operation error'
   echo '   10  Bitwarden CLI vault login/unlock error'
   echo '  255  unknown error'
-  exit "${1}"
 }
 
 get_cmd_opts() {
   while getopts ':hs:p:c:xI:T:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
-      h)  handle_help ;;
+      h)  handle_print_help_menu ;;
       s)  handle_print_entry_and_copy_pswd "${short_opt_arg}" ;;
       p)  handle_print_entry "${short_opt_arg}" ;;
       c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
@@ -73,7 +77,7 @@ get_cmd_opts() {
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
-            help)                           handle_help ;;
+            help)                           handle_print_help_menu ;;
             help=*)                         handle_illegal_long_option_arg "${long_opt_name}" ;;
             print-entry-and-copy-pswd=?*)   handle_print_entry_and_copy_pswd "${long_opt_arg}" ;;
             print-entry-and-copy-pswd*)     handle_print_entry_and_copy_pswd ;;
@@ -109,18 +113,24 @@ get_cmd_args() {
 }
 
 print_err_msg() {
+  err_msg="${1}"
   echo 'ERROR:'
-  printf "$(basename "${0}"): %s\\n\\n" "${1}"
+  printf "${prog_name}: %s\\n\\n" "${err_msg}"
 }
 
 quit_err_msg() {
-  print_err_msg "${1}"
-  exit "${2}"
+  err_msg="${1}"
+  err_code="${2}"
+  print_err_msg "${err_msg}"
+  exit "${err_code}"
 }
 
 quit_err_msg_with_help() {
-  print_err_msg "${1}"
-  print_usage "${2}"
+  err_msg="${1}"
+  err_code="${2}"
+  print_err_msg "${err_msg}"
+  print_usage
+  exit "${err_code}"
 }
 
 handle_unknown_option() {
@@ -131,7 +141,7 @@ handle_unknown_option() {
 
 handle_illegal_long_option_arg() {
   long_opt_name="${1}"
-  err_msg="illegal argument in \"${1}\""
+  err_msg="illegal argument in \"${long_opt_name}\""
   quit_err_msg_with_help "${err_msg}" 1
 }
 
@@ -141,12 +151,20 @@ handle_missing_long_option_arg() {
   quit_err_msg_with_help "${err_msg}" 1
 }
 
-handle_help() {
-  print_usage 0
+handle_print_help_menu() {
+  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+     [ "${print_entry}" = 'true' ] || \
+     [ "${copy_entry_pswd}" = 'true' ] || \
+     [ "${logout_and_lock_vault}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+
+  print_help_menu='true'
 }
 
 handle_print_entry_and_copy_pswd() {
-  if [ "${print_entry}" = 'true' ] || \
+  if [ "${print_help_menu}" = 'true' ] || \
+     [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
      [ "${logout_and_lock_vault}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
@@ -157,7 +175,8 @@ handle_print_entry_and_copy_pswd() {
 }
 
 handle_print_entry() {
-  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+  if [ "${print_help_menu}" = 'true' ] || \
+     [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
      [ "${logout_and_lock_vault}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
@@ -167,7 +186,8 @@ handle_print_entry() {
 }
 
 handle_copy_entry_pswd() {
-  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+  if [ "${print_help_menu}" = 'true' ] || \
+     [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${logout_and_lock_vault}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
@@ -177,7 +197,8 @@ handle_copy_entry_pswd() {
 }
 
 handle_logout_and_lock_vault() {
-  if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+  if [ "${print_help_menu}" = 'true' ] || \
+     [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
@@ -229,11 +250,11 @@ create_session_key_save_file_as_req() {
 }
 
 login_to_bitwarden_as_req() {
-  run_login_check_cmd="${bitwarden_cli_cmd} login --check 1> /dev/null 2>&1"
+  run_login_check_cmd="${bw_cli_cmd} login --check 1> /dev/null 2>&1"
 
   show_msg='echo "Logging in to Bitwarden vault..."'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
-  login_to_bw="${bitwarden_cli_cmd} login --raw --apikey"
+  login_to_bw="${bw_cli_cmd} login --raw --apikey"
   run_login_cmd="${show_msg}; ${set_api_key} ${login_to_bw}"
 
   try_with_fallback \
@@ -244,10 +265,10 @@ login_to_bitwarden_as_req() {
 
 unlock_bitwarden_vault_as_req() {
   session_key=$(cat "${session_key_save_file_path}")
-  run_unlock_check_cmd="${bitwarden_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
+  run_unlock_check_cmd="${bw_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
 
   show_msg='echo "Unlocking Bitwarden vault..."'
-  unlock_bw_vault="${bitwarden_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
+  unlock_bw_vault="${bw_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
   run_unlock_cmd="${show_msg}; ${unlock_bw_vault}"
 
   try_with_fallback \
@@ -262,8 +283,19 @@ login_to_bitwarden_and_unlock_vault_as_req() {
   unlock_bitwarden_vault_as_req "$@"
 }
 
+do_print_help_menu() {
+  print_usage
+}
+
 do_print_entry_and_copy_pswd() {
   login_to_bitwarden_and_unlock_vault_as_req "$@"
+  # logins="$(bw list items --search $1)"
+  # if [ $(printf "%s" "$logins" | jq ". | length") -eq 1  ]; then
+  #   login="$(printf "%s" "$logins" | jq ".[0]")"
+  # else
+  #   name="$(printf "%s" "$logins" | jq --raw-output ".[].name" | fzf --reverse)"
+  #   login="$(printf "%s" "$logins" | jq ".[] | select(.name == \"$name\")")"
+  # fi
 }
 
 do_print_entry() {
@@ -277,7 +309,7 @@ do_copy_entry_pswd() {
 do_logout_and_lock_vault() {
   # Note: logging out automatically locks the vault and invalidates session key
   echo "Logging out and locking Bitwarden vault..."
-  ${bitwarden_cli_cmd} logout 1> /dev/null 2>&1
+  ${bw_cli_cmd} logout 1> /dev/null 2>&1
 
   exit_code="${?}"
   if [ "${exit_code}" = 1 ]; then
@@ -287,10 +319,14 @@ do_logout_and_lock_vault() {
   fi
 }
 
+# MAIN SCRIPT:
+
 main() {
   get_cmd_opts "$@"
   get_cmd_args "$@"
-  if [ "${print_entry_and_copy_pswd}" = 'true' ]; then
+  if [ "${print_help_menu}" = 'true' ]; then
+    do_print_help_menu "$@"
+  elif [ "${print_entry_and_copy_pswd}" = 'true' ]; then
     do_print_entry_and_copy_pswd "$@"
   elif [ "${print_entry}" = 'true' ]; then
     do_print_entry "$@"
