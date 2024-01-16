@@ -15,7 +15,7 @@ print_help_menu='false'
 print_entry_and_copy_pswd='false'
 print_entry='false'
 copy_entry_pswd='false'
-logout_and_lock_vault='false'
+lock_vault_and_logout='false'
 
 # User Cmd Option Args
 srch_text=''
@@ -49,8 +49,8 @@ print_usage() {
   echo '      search for entry, and print it'
   echo '  -c [srch_text], --copy-entry-pswd[=srch_text]'
   echo '      search for entry, and copy password to clipboard'
-  echo '  -x, --logout-and-lock-vault'
-  echo '      logout and lock vault (Note: vault remains unlocked between user logins)'
+  echo '  -x, --lock-vault-and-logout'
+  echo '      lock vault and logout (Note: vault remains unlocked between user logins)'
   echo '  -I <id>, --login-api-key-client-id=<id>'
   echo "      API key client id used to log in to bitwarden (default \"${login_api_key_client_id}\")"
   echo '  -T <secret>, --login-api-key-client-secret=<secret>'
@@ -71,7 +71,7 @@ get_cmd_opts() {
       s)  handle_print_entry_and_copy_pswd "${short_opt_arg}" ;;
       p)  handle_print_entry "${short_opt_arg}" ;;
       c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
-      x)  handle_logout_and_lock_vault ;;
+      x)  handle_lock_vault_and_logout ;;
       I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
       T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
       -)  long_opt_name="${OPTARG}"
@@ -85,8 +85,8 @@ get_cmd_opts() {
             print-entry*)                   handle_print_entry ;;
             copy-entry-pswd=?*)             handle_copy_entry_pswd "${long_opt_arg}" ;;
             copy-entry-pswd*)               handle_copy_entry_pswd ;;
-            logout-and-lock-vault=?*)       handle_logout_and_lock_vault ;;
-            logout-and-lock-vault*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            lock-vault-and-logout=?*)       handle_lock_vault_and_logout ;;
+            lock-vault-and-logout*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
             login-api-key-client-id=?*)     handle_login_api_key_client_id "${long_opt_arg}" ;;
             login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
             login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
@@ -156,7 +156,7 @@ handle_print_help_menu() {
   if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${logout_and_lock_vault}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
 
@@ -167,7 +167,7 @@ handle_print_entry_and_copy_pswd() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${logout_and_lock_vault}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
 
@@ -179,7 +179,7 @@ handle_print_entry() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${logout_and_lock_vault}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
   print_entry='true'
@@ -190,21 +190,21 @@ handle_copy_entry_pswd() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
-     [ "${logout_and_lock_vault}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
   copy_entry_pswd='true'
   srch_text="${1}"
 }
 
-handle_logout_and_lock_vault() {
+handle_lock_vault_and_logout() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
-  logout_and_lock_vault='true'
+  lock_vault_and_logout='true'
 }
 
 handle_login_api_key_client_id() {
@@ -307,16 +307,18 @@ do_copy_entry_pswd() {
   login_to_bitwarden_and_unlock_vault_as_req "$@"
 }
 
-do_logout_and_lock_vault() {
+do_lock_vault_and_logout() {
   # Note: logging out automatically locks the vault and invalidates session key
-  echo "Logging out and locking Bitwarden vault..."
+  echo "Locking Bitwarden vault and logging out..."
   ${bw_cli_cmd} logout 1> /dev/null 2>&1
 
   exit_code="${?}"
   if [ "${exit_code}" = 1 ]; then
-    echo "Already logged out."
+    echo "Vault already locked, and already logged out."
   elif [ "${exit_code}" != 0 ]; then
     quit_err_msg "Bitwarden CLI error attempting to logout" 5
+  else
+    printf "Successfully locked vault and logged out.\n"
   fi
 }
 
@@ -333,8 +335,8 @@ main() {
     do_print_entry "$@"
   elif [ "${copy_entry_pswd}" = 'true' ]; then
     do_copy_entry_pswd "$@"
-  elif [ "${logout_and_lock_vault}" = 'true' ]; then
-    do_logout_and_lock_vault "$@"
+  elif [ "${lock_vault_and_logout}" = 'true' ]; then
+    do_lock_vault_and_logout "$@"
   else
     do_print_entry_and_copy_pswd "$@"
   fi
