@@ -128,7 +128,8 @@ quit_err_msg() {
 quit_err_msg_with_help() {
   err_msg="${1}"
   err_code="${2}"
-  print_err_msg "${err_msg}\n"
+  print_err_msg "${err_msg}"
+  printf "\n"
   print_usage
   exit "${err_code}"
 }
