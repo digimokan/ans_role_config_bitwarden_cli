@@ -253,10 +253,11 @@ create_session_key_save_file_as_req() {
 login_to_bitwarden_as_req() {
   run_login_check_cmd="${bw_cli_cmd} login --check 1> /dev/null 2>&1"
 
-  show_msg='echo "Logging in to Bitwarden vault..."'
+  show_prep_msg='echo "Logging in to Bitwarden vault..."'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
   login_to_bw="${bw_cli_cmd} login --raw --apikey"
-  run_login_cmd="${show_msg} && ${set_api_key} ${login_to_bw}"
+  show_stat_msg='printf "Successfully logged in.\n"'
+  run_login_cmd="${show_prep_msg} && ${set_api_key} ${login_to_bw} && ${show_stat_msg}"
 
   try_with_fallback \
     "${run_login_check_cmd}" \
@@ -268,9 +269,10 @@ unlock_bitwarden_vault_as_req() {
   session_key=$(cat "${session_key_save_file_path}")
   run_unlock_check_cmd="${bw_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
 
-  show_msg='echo "Unlocking Bitwarden vault..."'
+  show_prep_msg='echo "Unlocking Bitwarden vault..."'
   unlock_bw_vault="${bw_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
-  run_unlock_cmd="${show_msg} && ${unlock_bw_vault}"
+  show_stat_msg='printf "Successfully unlocked vault.\n"'
+  run_unlock_cmd="${show_prep_msg} && ${unlock_bw_vault} && ${show_stat_msg}"
 
   try_with_fallback \
     "${run_unlock_check_cmd}" \
