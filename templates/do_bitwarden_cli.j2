@@ -102,6 +102,7 @@ get_cmd_opts() {
 get_cmd_args() {
   shift $((OPTIND - 1))
   possible_cmd_arg="${1}"
+
   if [ "${possible_cmd_arg}" != '' ]; then
     if [ "${srch_text}" = '' ]; then
       srch_text="${1}"
@@ -255,7 +256,7 @@ login_to_bitwarden_as_req() {
   show_msg='echo "Logging in to Bitwarden vault..."'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
   login_to_bw="${bw_cli_cmd} login --raw --apikey"
-  run_login_cmd="${show_msg}; ${set_api_key} ${login_to_bw}"
+  run_login_cmd="${show_msg} && ${set_api_key} ${login_to_bw}"
 
   try_with_fallback \
     "${run_login_check_cmd}" \
@@ -269,7 +270,7 @@ unlock_bitwarden_vault_as_req() {
 
   show_msg='echo "Unlocking Bitwarden vault..."'
   unlock_bw_vault="${bw_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
-  run_unlock_cmd="${show_msg}; ${unlock_bw_vault}"
+  run_unlock_cmd="${show_msg} && ${unlock_bw_vault}"
 
   try_with_fallback \
     "${run_unlock_check_cmd}" \
