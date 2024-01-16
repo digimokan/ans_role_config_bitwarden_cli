@@ -30,37 +30,37 @@ bw_cli_cmd='bw'
 # LOCAL FUNCTIONS:
 
 print_usage() {
-  echo 'USAGE:'
-  echo "  ${prog_name}  -h"
-  echo "  ${prog_name}  [-I <id>]  [-T <secret>]     [srch_text]"
-  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -s [srch_text]"
-  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -p [srch_text]"
-  echo "  ${prog_name}  [-I <id>]  [-T <secret>]  -c [srch_text]"
-  echo "  ${prog_name}  -x"
-  echo 'ARGUMENTS:'
-  echo '  [srch_text]'
-  echo '      search for entry, print it, and copy password to clipboard'
-  echo 'OPTIONS:'
-  echo '  -h, --help'
-  echo '      print this help message'
-  echo '  -s [srch_text], --print-entry-and-copy-pswd[=srch_text]'
-  echo '      search for entry, print it, and copy password to clipboard'
-  echo '  -p [srch_text], --print-entry[=srch_text]'
-  echo '      search for entry, and print it'
-  echo '  -c [srch_text], --copy-entry-pswd[=srch_text]'
-  echo '      search for entry, and copy password to clipboard'
-  echo '  -x, --lock-vault-and-logout'
-  echo '      lock vault and logout (Note: vault remains unlocked between user logins)'
-  echo '  -I <id>, --login-api-key-client-id=<id>'
-  echo "      API key client id used to log in to bitwarden (default \"${login_api_key_client_id}\")"
-  echo '  -T <secret>, --login-api-key-client-secret=<secret>'
-  echo "      API key client secret used to log in to bitwarden (default \"${login_api_key_client_secret}\")"
-  echo 'EXIT CODES:'
-  echo '    0  ok'
-  echo '    1  usage, arguments, or options error'
-  echo '    5  Bitwarden CLI operation error'
-  echo '   10  Bitwarden CLI vault login/unlock error'
-  echo '  255  unknown error'
+  printf "USAGE:\n"
+  printf "  %s  -h\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]     [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]  -s [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]  -p [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]  -c [srch_text]\n" "${prog_name}"
+  printf "  %s  -x\n" "${prog_name}"
+  printf "ARGUMENTS:\n"
+  printf "  [srch_text]\n"
+  printf "      search for entry, print it, and copy password to clipboard\n"
+  printf "OPTIONS:\n"
+  printf "  -h, --help\n"
+  printf "      print this help message\n"
+  printf "  -s [srch_text], --print-entry-and-copy-pswd[=srch_text]\n"
+  printf "      search for entry, print it, and copy password to clipboard\n"
+  printf "  -p [srch_text], --print-entry[=srch_text]\n"
+  printf "      search for entry, and print it\n"
+  printf "  -c [srch_text], --copy-entry-pswd[=srch_text]\n"
+  printf "      search for entry, and copy password to clipboard\n"
+  printf "  -x, --lock-vault-and-logout\n"
+  printf "      lock vault and logout (Note: vault remains unlocked between user logins)\n"
+  printf "  -I <id>, --login-api-key-client-id=<id>\n"
+  printf "      API key client id used to log in to bitwarden (default \"%s\")\n" "${login_api_key_client_id}"
+  printf "  -T <secret>, --login-api-key-client-secret=<secret>\n"
+  printf "      API key client secret used to log in to bitwarden (default \"%s\")\n" "${login_api_key_client_secret}"
+  printf "EXIT CODES:\n"
+  printf "    0  ok\n"
+  printf "    1  usage, arguments, or options error\n"
+  printf "    5  Bitwarden CLI operation error\n"
+  printf "   10  Bitwarden CLI vault login/unlock error\n"
+  printf "  255  unknown error\n"
 }
 
 get_cmd_opts() {
@@ -115,8 +115,7 @@ get_cmd_args() {
 
 print_err_msg() {
   err_msg="${1}"
-  echo 'ERROR:'
-  printf "${prog_name}: %s\\n\\n" "${err_msg}"
+  printf "ERROR:\n%s: %s\n" "${prog_name}" "${err_msg}"
 }
 
 quit_err_msg() {
@@ -129,7 +128,7 @@ quit_err_msg() {
 quit_err_msg_with_help() {
   err_msg="${1}"
   err_code="${2}"
-  print_err_msg "${err_msg}"
+  print_err_msg "${err_msg}\n"
   print_usage
   exit "${err_code}"
 }
@@ -253,7 +252,7 @@ create_session_key_save_file_as_req() {
 login_to_bitwarden_as_req() {
   run_login_check_cmd="${bw_cli_cmd} login --check 1> /dev/null 2>&1"
 
-  show_prep_msg='echo "Logging in to Bitwarden vault..."'
+  show_prep_msg='printf "Logging in to Bitwarden vault...\n"'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
   login_to_bw="${bw_cli_cmd} login --raw --apikey"
   show_stat_msg='printf "Successfully logged in.\n"'
@@ -269,7 +268,7 @@ unlock_bitwarden_vault_as_req() {
   session_key=$(cat "${session_key_save_file_path}")
   run_unlock_check_cmd="${bw_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
 
-  show_prep_msg='echo "Unlocking Bitwarden vault..."'
+  show_prep_msg='printf "Unlocking Bitwarden vault...\n"'
   unlock_bw_vault="${bw_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
   show_stat_msg='printf "Successfully unlocked vault.\n"'
   run_unlock_cmd="${show_prep_msg} && ${unlock_bw_vault} && ${show_stat_msg}"
@@ -311,12 +310,12 @@ do_copy_entry_pswd() {
 
 do_lock_vault_and_logout() {
   # Note: logging out automatically locks the vault and invalidates session key
-  echo "Locking Bitwarden vault and logging out..."
+  printf "Locking Bitwarden vault and logging out...\n"
   ${bw_cli_cmd} logout 1> /dev/null 2>&1
 
   exit_code="${?}"
   if [ "${exit_code}" = 1 ]; then
-    echo "Vault already locked, and already logged out."
+    printf "Vault already locked, and already logged out.\n"
   elif [ "${exit_code}" != 0 ]; then
     quit_err_msg "Bitwarden CLI error attempting to logout" 5
   else
