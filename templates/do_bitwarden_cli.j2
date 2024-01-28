@@ -352,31 +352,29 @@ do_lock_vault_and_logout() {
 do_check_login_and_unlock() {
   create_session_key_save_file_as_req "$@"
 
-  printf "Vault status: "
-
   eval "${bw_login_check_cmd}"
-  exit_code="${?}"
-  if [ "${exit_code}" = 0 ]; then
-    printf "logged in, "
-  elif [ "${exit_code}" = 1 ]; then
-    printf "logged out, "
+  _exit_code="${?}"
+  if [ "${_exit_code}" = 0 ]; then
+    _login_status="logged in"
+  elif [ "${_exit_code}" = 1 ]; then
+    _login_status="logged out"
   else
-    printf "\n"
     quit_err_msg "Bitwarden CLI error attempting to check vault login" 5
   fi
 
-  session_key="$(cat "${session_key_save_file_path}")"
-  run_unlock_check_cmd="${bw_unlock_check_cmd_prefix} \"${session_key}\" ${bw_unlock_check_cmd_suffix}"
-  eval "${run_unlock_check_cmd}"
-  exit_code="${?}"
-  if [ "${exit_code}" = 0 ]; then
-    printf "unlocked.\n"
-  elif [ "${exit_code}" = 1 ]; then
-    printf "locked.\n"
+  _session_key="$(cat "${session_key_save_file_path}")"
+  _run_unlock_check_cmd="${bw_unlock_check_cmd_prefix} \"${_session_key}\" ${bw_unlock_check_cmd_suffix}"
+  eval "${_run_unlock_check_cmd}"
+  _exit_code="${?}"
+  if [ "${_exit_code}" = 0 ]; then
+    _vault_status="unlocked"
+  elif [ "${_exit_code}" = 1 ]; then
+    _vault_status="locked"
   else
-    printf "\n"
     quit_err_msg "Bitwarden CLI error attempting to check vault unlock" 5
   fi
+
+  printf "Vault status: %s, %s.\n" "${_login_status}" "${_vault_status}"
 }
 
 # MAIN SCRIPT:
