@@ -16,6 +16,7 @@ print_entry_and_copy_pswd='false'
 print_entry='false'
 copy_entry_pswd='false'
 lock_vault_and_logout='false'
+check_login_and_unlock='false'
 
 # User Cmd Option Args
 srch_text=''
@@ -25,7 +26,13 @@ prog_name="$(basename "${0}")"
 session_key_save_file_path='/tmp/bitwarden_cli/session_key.txt'
 login_api_key_client_id='{{ bitwarden_cli_api_key_client_id }}'
 login_api_key_client_secret='{{ bitwarden_cli_api_key_client_secret }}'
+
+# Bitwarden CLI Cmds
 bw_cli_cmd='bw'
+bw_redir_devnull='1> /dev/null 2>&1'
+bw_login_check_cmd="${bw_cli_cmd} login --check ${bw_redir_devnull}"
+bw_unlock_check_cmd_prefix="${bw_cli_cmd} unlock --check --session"
+bw_unlock_check_cmd_suffix="${bw_redir_devnull}"
 
 # LOCAL FUNCTIONS:
 
@@ -36,7 +43,8 @@ print_usage() {
   printf "  %s  [-I <id>]  [-T <secret>]  -s [srch_text]\n" "${prog_name}"
   printf "  %s  [-I <id>]  [-T <secret>]  -p [srch_text]\n" "${prog_name}"
   printf "  %s  [-I <id>]  [-T <secret>]  -c [srch_text]\n" "${prog_name}"
-  printf "  %s  -x\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]  -x\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <secret>]  -k\n" "${prog_name}"
   printf "ARGUMENTS:\n"
   printf "  [srch_text]\n"
   printf "      search for entry, print it, and copy password to clipboard\n"
@@ -51,6 +59,8 @@ print_usage() {
   printf "      search for entry, and copy password to clipboard\n"
   printf "  -x, --lock-vault-and-logout\n"
   printf "      lock vault and logout (Note: vault remains unlocked between user logins)\n"
+  printf "  -k, --check-login-and-unlock\n"
+  printf "      check if logged in to vault, and if vault is unlocked\n"
   printf "  -I <id>, --login-api-key-client-id=<id>\n"
   printf "      API key client id used to log in to bitwarden (default \"%s\")\n" "${login_api_key_client_id}"
   printf "  -T <secret>, --login-api-key-client-secret=<secret>\n"
@@ -64,7 +74,7 @@ print_usage() {
 }
 
 get_cmd_opts() {
-  while getopts ':hs:p:c:xI:T:-:' option; do
+  while getopts ':hs:p:c:xkI:T:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  handle_print_help_menu ;;
@@ -72,6 +82,7 @@ get_cmd_opts() {
       p)  handle_print_entry "${short_opt_arg}" ;;
       c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
       x)  handle_lock_vault_and_logout ;;
+      k)  handle_check_login_and_unlock ;;
       I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
       T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
       -)  long_opt_name="${OPTARG}"
@@ -87,6 +98,8 @@ get_cmd_opts() {
             copy-entry-pswd*)               handle_copy_entry_pswd ;;
             lock-vault-and-logout=?*)       handle_lock_vault_and_logout ;;
             lock-vault-and-logout*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            check-login-and-unlock=?*)      handle_check_login_and_unlock ;;
+            check-login-and-unlock*)        handle_illegal_long_option_arg "${long_opt_name}" ;;
             login-api-key-client-id=?*)     handle_login_api_key_client_id "${long_opt_arg}" ;;
             login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
             login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
@@ -156,10 +169,10 @@ handle_print_help_menu() {
   if [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${lock_vault_and_logout}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ] || \
+     [ "${check_login_and_unlock}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
-
   print_help_menu='true'
 }
 
@@ -167,10 +180,10 @@ handle_print_entry_and_copy_pswd() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${lock_vault_and_logout}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ] || \
+     [ "${check_login_and_unlock}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
-
   print_entry_and_copy_pswd='true'
   srch_text="${1}"
 }
@@ -179,7 +192,8 @@ handle_print_entry() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${copy_entry_pswd}" = 'true' ] || \
-     [ "${lock_vault_and_logout}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ] || \
+     [ "${check_login_and_unlock}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
   print_entry='true'
@@ -190,7 +204,8 @@ handle_copy_entry_pswd() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
-     [ "${lock_vault_and_logout}" = 'true' ]; then
+     [ "${lock_vault_and_logout}" = 'true' ] || \
+     [ "${check_login_and_unlock}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
   copy_entry_pswd='true'
@@ -201,10 +216,22 @@ handle_lock_vault_and_logout() {
   if [ "${print_help_menu}" = 'true' ] || \
      [ "${print_entry_and_copy_pswd}" = 'true' ] || \
      [ "${print_entry}" = 'true' ] || \
-     [ "${copy_entry_pswd}" = 'true' ]; then
+     [ "${copy_entry_pswd}" = 'true' ] || \
+     [ "${check_login_and_unlock}" = 'true' ]; then
     quit_err_msg_with_help "mutually exclusive options selected" 1
   fi
   lock_vault_and_logout='true'
+}
+
+handle_check_login_and_unlock() {
+  if [ "${print_help_menu}" = 'true' ] || \
+     [ "${print_entry_and_copy_pswd}" = 'true' ] || \
+     [ "${print_entry}" = 'true' ] || \
+     [ "${copy_entry_pswd}" = 'true' ] || \
+     [ "${lock_vault_and_logout}" = 'true' ]; then
+    quit_err_msg_with_help "mutually exclusive options selected" 1
+  fi
+  check_login_and_unlock='true'
 }
 
 handle_login_api_key_client_id() {
@@ -251,8 +278,6 @@ create_session_key_save_file_as_req() {
 }
 
 login_to_bitwarden_as_req() {
-  run_login_check_cmd="${bw_cli_cmd} login --check 1> /dev/null 2>&1"
-
   show_prep_msg='printf "Logging in to Bitwarden vault...\n"'
   set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
   login_to_bw="${bw_cli_cmd} login --raw --apikey"
@@ -260,14 +285,14 @@ login_to_bitwarden_as_req() {
   run_login_cmd="${show_prep_msg} && ${set_api_key} ${login_to_bw} && ${show_stat_msg}"
 
   try_with_fallback \
-    "${run_login_check_cmd}" \
+    "${bw_login_check_cmd}" \
     "${run_login_cmd}" \
     "Bitwarden CLI error attempting to login" 10
 }
 
 unlock_bitwarden_vault_as_req() {
-  session_key=$(cat "${session_key_save_file_path}")
-  run_unlock_check_cmd="${bw_cli_cmd} unlock --check --session \"${session_key}\" 1> /dev/null 2>&1"
+  session_key="$(cat "${session_key_save_file_path}")"
+  run_unlock_check_cmd="${bw_unlock_check_cmd_prefix} \"${session_key}\" ${bw_unlock_check_cmd_suffix}"
 
   show_prep_msg='printf "Unlocking Bitwarden vault...\n"'
   unlock_bw_vault="${bw_cli_cmd} unlock --raw > \"${session_key_save_file_path}\""
@@ -324,6 +349,36 @@ do_lock_vault_and_logout() {
   fi
 }
 
+do_check_login_and_unlock() {
+  create_session_key_save_file_as_req "$@"
+
+  printf "Vault status: "
+
+  eval "${bw_login_check_cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" = 0 ]; then
+    printf "logged in, "
+  elif [ "${exit_code}" = 1 ]; then
+    printf "logged out, "
+  else
+    printf "\n"
+    quit_err_msg "Bitwarden CLI error attempting to check vault login" 5
+  fi
+
+  session_key="$(cat "${session_key_save_file_path}")"
+  run_unlock_check_cmd="${bw_unlock_check_cmd_prefix} \"${session_key}\" ${bw_unlock_check_cmd_suffix}"
+  eval "${run_unlock_check_cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" = 0 ]; then
+    printf "unlocked.\n"
+  elif [ "${exit_code}" = 1 ]; then
+    printf "locked.\n"
+  else
+    printf "\n"
+    quit_err_msg "Bitwarden CLI error attempting to check vault unlock" 5
+  fi
+}
+
 # MAIN SCRIPT:
 
 main() {
@@ -339,6 +394,8 @@ main() {
     do_copy_entry_pswd "$@"
   elif [ "${lock_vault_and_logout}" = 'true' ]; then
     do_lock_vault_and_logout "$@"
+  elif [ "${check_login_and_unlock}" = 'true' ]; then
+    do_check_login_and_unlock "$@"
   else
     do_print_entry_and_copy_pswd "$@"
   fi
