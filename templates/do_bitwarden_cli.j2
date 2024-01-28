@@ -23,7 +23,7 @@ srch_text=''
 
 # Hard-Coded Settings
 prog_name="$(basename "${0}")"
-session_key_save_file_path='/tmp/bitwarden_cli/session_key.txt'
+session_key_save_file_path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 login_api_key_client_id='{{ bitwarden_cli_api_key_client_id }}'
 login_api_key_client_secret='{{ bitwarden_cli_api_key_client_secret }}'
 
