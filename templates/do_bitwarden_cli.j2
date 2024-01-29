@@ -11,7 +11,7 @@
 # GLOBAL VARS:
 
 # Hard-Coded Settings
-prog_name="$(basename "${0}")"
+readonly Prog_Name="$(basename "${0}")"
 
 # User Cmd Option Selections
 print_help_menu='false'
@@ -38,13 +38,13 @@ bw_unlock_check_cmd_suffix="${bw_redir_devnull}"
 
 print_usage() {
   printf "USAGE:\n"
-  printf "  %s  -h\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${prog_name}"
+  printf "  %s  -h\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${Prog_Name}"
   printf "ARGUMENTS:\n"
   printf "  [srch_text]\n"
   printf "      search for entry, print it, and copy password to clipboard\n"
@@ -133,7 +133,7 @@ get_cmd_args() {
 
 print_err_msg() {
   err_msg="${1}"
-  printf "ERROR:\n%s: %s\n" "${prog_name}" "${err_msg}"
+  printf "ERROR:\n%s: %s\n" "${Prog_Name}" "${err_msg}"
 }
 
 quit_err_msg() {
