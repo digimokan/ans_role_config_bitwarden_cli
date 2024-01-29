@@ -6,7 +6,7 @@
 #            2. Keep Bitwarden vault login persistent between user logins.
 # Args/Opts: See usage (run with -h option).
 # Meta:      Script installed by ansible {{ role_name | basename }}.
-# Style:     ENV_VAR, Global_Var, _Global_Readonly_Var, func_local_var
+# Style:     ENV_VAR, Global_Var, _Global_Readonly_Var, func_local_var, MyFunc
 ################################################################################
 
 # GLOBAL VARS:
@@ -37,7 +37,7 @@ readonly _Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
 
 # LOCAL FUNCTIONS:
 
-print_usage() {
+PrintUsage() {
   printf "USAGE:\n"
   printf "  %s  -h\n" "${Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${Prog_Name}"
@@ -76,49 +76,49 @@ print_usage() {
   printf "  255  unknown error\n"
 }
 
-get_cmd_opts() {
+GetCmdOpts() {
   while getopts ':hs:p:c:xkI:T:K:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
-      h)  handle_print_help_menu ;;
-      s)  handle_print_entry_and_copy_pswd "${short_opt_arg}" ;;
-      p)  handle_print_entry "${short_opt_arg}" ;;
-      c)  handle_copy_entry_pswd "${short_opt_arg}" ;;
-      x)  handle_lock_vault_and_logout ;;
-      k)  handle_check_login_and_unlock ;;
-      I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
-      T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
-      K)  handle_session_key_save_file_path "${short_opt_arg}" ;;
+      h)  HandlePrintHelpMenu ;;
+      s)  HandlePrintEntryAndCopyPswd "${short_opt_arg}" ;;
+      p)  HandlePrintEntry "${short_opt_arg}" ;;
+      c)  HandleCopyEntryPswd "${short_opt_arg}" ;;
+      x)  HandleLockVaultAndLogout ;;
+      k)  HandleCheckLoginAndUnlock ;;
+      I)  HandleLoginApiKeyClientId "${short_opt_arg}" ;;
+      T)  HandleLoginApiKeyClientSecret "${short_opt_arg}" ;;
+      K)  HandleSessionKeySaveFilePath "${short_opt_arg}" ;;
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
-            help)                           handle_print_help_menu ;;
-            help=*)                         handle_illegal_long_option_arg "${long_opt_name}" ;;
-            print-entry-and-copy-pswd=?*)   handle_print_entry_and_copy_pswd "${long_opt_arg}" ;;
-            print-entry-and-copy-pswd*)     handle_print_entry_and_copy_pswd ;;
-            print-entry=?*)                 handle_print_entry "${long_opt_arg}" ;;
-            print-entry*)                   handle_print_entry ;;
-            copy-entry-pswd=?*)             handle_copy_entry_pswd "${long_opt_arg}" ;;
-            copy-entry-pswd*)               handle_copy_entry_pswd ;;
-            lock-vault-and-logout=?*)       handle_lock_vault_and_logout ;;
-            lock-vault-and-logout*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
-            check-login-and-unlock=?*)      handle_check_login_and_unlock ;;
-            check-login-and-unlock*)        handle_illegal_long_option_arg "${long_opt_name}" ;;
-            login-api-key-client-id=?*)     handle_login_api_key_client_id "${long_opt_arg}" ;;
-            login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
-            login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
-            login-api-key-client-secret*)   handle_missing_long_option_arg "${long_opt_name}" ;;
-            session-key-save-file-path=?*)  handle_session_key_save_file_path "${long_opt_arg}" ;;
-            session-key-save-file-path*)    handle_missing_long_option_arg "${long_opt_name}" ;;
+            help)                           HandlePrintHelpMenu ;;
+            help=*)                         HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            print-entry-and-copy-pswd=?*)   HandlePrintEntryAndCopyPswd "${long_opt_arg}" ;;
+            print-entry-and-copy-pswd*)     HandlePrintEntryAndCopyPswd ;;
+            print-entry=?*)                 HandlePrintEntry "${long_opt_arg}" ;;
+            print-entry*)                   HandlePrintEntry ;;
+            copy-entry-pswd=?*)             HandleCopyEntryPswd "${long_opt_arg}" ;;
+            copy-entry-pswd*)               HandleCopyEntryPswd ;;
+            lock-vault-and-logout=?*)       HandleLockVaultAndLogout ;;
+            lock-vault-and-logout*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            check-login-and-unlock=?*)      HandleCheckLoginAndUnlock ;;
+            check-login-and-unlock*)        HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            login-api-key-client-id=?*)     HandleLoginApiKeyClientId "${long_opt_arg}" ;;
+            login-api-key-client-id*)       HandleMissingLongOptionArg "${long_opt_name}" ;;
+            login-api-key-client-secret=?*) HandleLoginApiKeyClientSecret "${long_opt_arg}" ;;
+            login-api-key-client-secret*)   HandleMissingLongOptionArg "${long_opt_name}" ;;
+            session-key-save-file-path=?*)  HandleSessionKeySaveFilePath "${long_opt_arg}" ;;
+            session-key-save-file-path*)    HandleMissingLongOptionArg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
-            *)                              handle_unknown_option "${long_opt_name}" ;;
+            *)                              HandleUnknownOption "${long_opt_name}" ;;
           esac ;;
-      \?) handle_unknown_option "${short_opt_arg}" ;;
+      \?) HandleUnknownOption "${short_opt_arg}" ;;
     esac
   done
 }
 
-get_cmd_args() {
+GetCmdArgs() {
   shift $((OPTIND - 1))
   possible_cmd_arg="${1}"
 
@@ -127,143 +127,132 @@ get_cmd_args() {
       Srch_Text="${1}"
     else
       err_msg="don't specify srch_text as both option arg and cmd arg"
-      quit_err_msg_with_help "${err_msg}" 1
+      QuitErrMsgWithHelp "${err_msg}" 1
     fi
   fi
 }
 
-print_err_msg() {
+PrintErrMsg() {
   err_msg="${1}"
   printf "ERROR:\n%s: %s\n" "${Prog_Name}" "${err_msg}"
 }
 
-quit_err_msg() {
+QuitErrMsg() {
   err_msg="${1}"
   err_code="${2}"
-  print_err_msg "${err_msg}"
+  PrintErrMsg "${err_msg}"
   exit "${err_code}"
 }
 
-quit_err_msg_with_help() {
+QuitErrMsgWithHelp() {
   err_msg="${1}"
   err_code="${2}"
-  print_err_msg "${err_msg}"
+  PrintErrMsg "${err_msg}"
   printf "\n"
-  print_usage
+  PrintUsage
   exit "${err_code}"
 }
 
-handle_unknown_option() {
+HandleUnknownOption() {
   short_opt_letter_or_long_opt_name="${1}"
   err_msg="unknown option \"${short_opt_letter_or_long_opt_name}\""
-  quit_err_msg_with_help "${err_msg}" 1
+  QuitErrMsgWithHelp "${err_msg}" 1
 }
 
-handle_illegal_long_option_arg() {
+HandleIllegalLongOptionArg() {
   long_opt_name="${1}"
   err_msg="illegal argument in \"${long_opt_name}\""
-  quit_err_msg_with_help "${err_msg}" 1
+  QuitErrMsgWithHelp "${err_msg}" 1
 }
 
-handle_missing_long_option_arg() {
+HandleMissingLongOptionArg() {
   long_opt_name="${1}"
   err_msg="missing argument for option \"${long_opt_name}\""
-  quit_err_msg_with_help "${err_msg}" 1
+  QuitErrMsgWithHelp "${err_msg}" 1
 }
 
-handle_print_help_menu() {
+HandlePrintHelpMenu() {
   if [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Pswd}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Print_Help_Menu='true'
 }
 
-handle_print_entry_and_copy_pswd() {
+HandlePrintEntryAndCopyPswd() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Pswd}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Print_Entry_And_Copy_Pswd='true'
   Srch_Text="${1}"
 }
 
-handle_print_entry() {
+HandlePrintEntry() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
      [ "${Copy_Entry_Pswd}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Print_Entry='true'
   Srch_Text="${1}"
 }
 
-handle_copy_entry_pswd() {
+HandleCopyEntryPswd() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Copy_Entry_Pswd='true'
   Srch_Text="${1}"
 }
 
-handle_lock_vault_and_logout() {
+HandleLockVaultAndLogout() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Pswd}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Lock_Vault_And_Logout='true'
 }
 
-handle_check_login_and_unlock() {
+HandleCheckLoginAndUnlock() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Pswd}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ]; then
-    quit_err_msg_with_help "mutually exclusive options selected" 1
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Check_Login_And_Unlock='true'
 }
 
-handle_login_api_key_client_id() {
+HandleLoginApiKeyClientId() {
   Login_Api_Key_Client_Id="${1}"
 }
 
-handle_login_api_key_client_secret() {
+HandleLoginApiKeyClientSecret() {
   Login_Api_Key_Client_Secret="${1}"
 }
 
-handle_session_key_save_file_path() {
+HandleSessionKeySaveFilePath() {
   Session_Key_Save_File_Path="${1}"
 }
 
-try_with_exit() {
-  cmd="${1}"
-  err_msg="${2}"
-  err_code="${3}"
-  eval "${cmd}"
-  exit_code="${?}"
-  if [ "${exit_code}" != 0 ]; then
-    quit_err_msg "${err_msg}" "${err_code}"
-  fi
-}
-
-try_with_fallback() {
+TryWithFallback() {
   try_cmd="${1}"
   fallback_cmd="${2}"
   err_msg="${3}"
@@ -274,12 +263,12 @@ try_with_fallback() {
     eval "${fallback_cmd}"
     exit_code="${?}"
     if [ "${exit_code}" != 0 ]; then
-      quit_err_msg "${err_msg}" "${err_code}"
+      QuitErrMsg "${err_msg}" "${err_code}"
     fi
   fi
 }
 
-create_session_key_save_file_as_req() {
+CreateSessionKeySaveFileAsReq() {
   if [ ! -f "${Session_Key_Save_File_Path}" ]; then
     session_key_save_file_dir=$(dirname "${Session_Key_Save_File_Path}")
     mkdir -p "${session_key_save_file_dir}"
@@ -287,20 +276,20 @@ create_session_key_save_file_as_req() {
   fi
 }
 
-login_to_bitwarden_as_req() {
+LoginToBitwardenAsReq() {
   show_prep_msg='printf "Logging in to Bitwarden vault...\n"'
   set_api_key="BW_CLIENTID='${Login_Api_Key_Client_Id}' BW_CLIENTSECRET='${Login_Api_Key_Client_Secret}'"
   login_to_bw="${_Bw_Cli_Cmd} login --raw --apikey"
   show_stat_msg='printf "Successfully logged in.\n"'
   run_login_cmd="${show_prep_msg} && ${set_api_key} ${login_to_bw} && ${show_stat_msg}"
 
-  try_with_fallback \
+  TryWithFallback \
     "${_Bw_Login_Check_Cmd}" \
     "${run_login_cmd}" \
     "Bitwarden CLI error attempting to login" 10
 }
 
-unlock_bitwarden_vault_as_req() {
+UnlockBitwardenVaultAsReq() {
   session_key="$(cat "${Session_Key_Save_File_Path}")"
   run_unlock_check_cmd="${_Bw_Unlock_Check_Cmd_Prefix} \"${session_key}\" ${_Bw_Unlock_Check_Cmd_Suffix}"
 
@@ -309,24 +298,24 @@ unlock_bitwarden_vault_as_req() {
   show_stat_msg='printf "Successfully unlocked vault.\n"'
   run_unlock_cmd="${show_prep_msg} && ${unlock_bw_vault} && ${show_stat_msg}"
 
-  try_with_fallback \
+  TryWithFallback \
     "${run_unlock_check_cmd}" \
     "${run_unlock_cmd}" \
     "Bitwarden CLI error attempting to unlock vault" 10
 }
 
-login_to_bitwarden_and_unlock_vault_as_req() {
-  create_session_key_save_file_as_req "$@"
-  login_to_bitwarden_as_req "$@"
-  unlock_bitwarden_vault_as_req "$@"
+LoginToBitwardenAndUnlockVaultAsReq() {
+  CreateSessionKeySaveFileAsReq "$@"
+  LoginToBitwardenAsReq "$@"
+  UnlockBitwardenVaultAsReq "$@"
 }
 
-do_print_help_menu() {
-  print_usage
+DoPrintHelpMenu() {
+  PrintUsage
 }
 
-do_print_entry_and_copy_pswd() {
-  login_to_bitwarden_and_unlock_vault_as_req "$@"
+DoPrintEntryAndCopyPswd() {
+  LoginToBitwardenAndUnlockVaultAsReq "$@"
   # logins="$(bw list items --search $1)"
   # if [ $(printf "%s" "$logins" | jq ". | length") -eq 1  ]; then
   #   login="$(printf "%s" "$logins" | jq ".[0]")"
@@ -336,15 +325,15 @@ do_print_entry_and_copy_pswd() {
   # fi
 }
 
-do_print_entry() {
-  login_to_bitwarden_and_unlock_vault_as_req "$@"
+DoPrintEntry() {
+  LoginToBitwardenAndUnlockVaultAsReq "$@"
 }
 
-do_copy_entry_pswd() {
-  login_to_bitwarden_and_unlock_vault_as_req "$@"
+DoCopyEntryPswd() {
+  LoginToBitwardenAndUnlockVaultAsReq "$@"
 }
 
-do_lock_vault_and_logout() {
+DoLockVaultAndLogout() {
   # Note: logging out automatically locks the vault and invalidates session key
   printf "Locking Bitwarden vault and logging out...\n"
   ${_Bw_Cli_Cmd} logout 1> /dev/null 2>&1
@@ -353,14 +342,14 @@ do_lock_vault_and_logout() {
   if [ "${exit_code}" = 1 ]; then
     printf "Vault already locked, and already logged out.\n"
   elif [ "${exit_code}" != 0 ]; then
-    quit_err_msg "Bitwarden CLI error attempting to logout" 5
+    QuitErrMsg "Bitwarden CLI error attempting to logout" 5
   else
     printf "Successfully locked vault and logged out.\n"
   fi
 }
 
-do_check_login_and_unlock() {
-  create_session_key_save_file_as_req "$@"
+DoCheckLoginAndUnlock() {
+  CreateSessionKeySaveFileAsReq "$@"
 
   eval "${_Bw_Login_Check_Cmd}"
   exit_code="${?}"
@@ -369,7 +358,7 @@ do_check_login_and_unlock() {
   elif [ "${exit_code}" = 1 ]; then
     login_status="logged out"
   else
-    quit_err_msg "Bitwarden CLI error attempting to check vault login" 5
+    QuitErrMsg "Bitwarden CLI error attempting to check vault login" 5
   fi
 
   session_key="$(cat "${Session_Key_Save_File_Path}")"
@@ -381,7 +370,7 @@ do_check_login_and_unlock() {
   elif [ "${exit_code}" = 1 ]; then
     vault_status="locked"
   else
-    quit_err_msg "Bitwarden CLI error attempting to check vault unlock" 5
+    QuitErrMsg "Bitwarden CLI error attempting to check vault unlock" 5
   fi
 
   printf "Vault status: %s, %s.\n" "${login_status}" "${vault_status}"
@@ -389,26 +378,26 @@ do_check_login_and_unlock() {
 
 # MAIN SCRIPT:
 
-main() {
-  get_cmd_opts "$@"
-  get_cmd_args "$@"
+Main() {
+  GetCmdOpts "$@"
+  GetCmdArgs "$@"
   if [ "${Print_Help_Menu}" = 'true' ]; then
-    do_print_help_menu "$@"
+    DoPrintHelpMenu "$@"
   elif [ "${Print_Entry_And_Copy_Pswd}" = 'true' ]; then
-    do_print_entry_and_copy_pswd "$@"
+    DoPrintEntryAndCopyPswd "$@"
   elif [ "${Print_Entry}" = 'true' ]; then
-    do_print_entry "$@"
+    DoPrintEntry "$@"
   elif [ "${Copy_Entry_Pswd}" = 'true' ]; then
-    do_copy_entry_pswd "$@"
+    DoCopyEntryPswd "$@"
   elif [ "${Lock_Vault_And_Logout}" = 'true' ]; then
-    do_lock_vault_and_logout "$@"
+    DoLockVaultAndLogout "$@"
   elif [ "${Check_Login_And_Unlock}" = 'true' ]; then
-    do_check_login_and_unlock "$@"
+    DoCheckLoginAndUnlock "$@"
   else
-    do_print_entry_and_copy_pswd "$@"
+    DoPrintEntryAndCopyPswd "$@"
   fi
   exit 0
 }
 
-main "$@"
+Main "$@"
 
