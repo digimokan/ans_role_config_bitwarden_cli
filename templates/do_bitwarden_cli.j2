@@ -10,6 +10,9 @@
 
 # GLOBAL VARS:
 
+# Hard-Coded Settings
+prog_name="$(basename "${0}")"
+
 # User Cmd Option Selections
 print_help_menu='false'
 print_entry_and_copy_pswd='false'
@@ -20,12 +23,9 @@ check_login_and_unlock='false'
 
 # User Cmd Option Args
 srch_text=''
-
-# Hard-Coded Settings
-prog_name="$(basename "${0}")"
-session_key_save_file_path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 login_api_key_client_id='{{ bitwarden_cli_api_key_client_id }}'
 login_api_key_client_secret='{{ bitwarden_cli_api_key_client_secret }}'
+session_key_save_file_path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 
 # Bitwarden CLI Cmds
 bw_cli_cmd='bw'
@@ -39,12 +39,12 @@ bw_unlock_check_cmd_suffix="${bw_redir_devnull}"
 print_usage() {
   printf "USAGE:\n"
   printf "  %s  -h\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]     [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]  -s [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]  -p [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]  -c [srch_text]\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]  -x\n" "${prog_name}"
-  printf "  %s  [-I <id>]  [-T <secret>]  -k\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${prog_name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${prog_name}"
   printf "ARGUMENTS:\n"
   printf "  [srch_text]\n"
   printf "      search for entry, print it, and copy password to clipboard\n"
@@ -63,8 +63,10 @@ print_usage() {
   printf "      check if logged in to vault, and if vault is unlocked\n"
   printf "  -I <id>, --login-api-key-client-id=<id>\n"
   printf "      API key client id used to log in to bitwarden (default \"%s\")\n" "${login_api_key_client_id}"
-  printf "  -T <secret>, --login-api-key-client-secret=<secret>\n"
+  printf "  -T <sec>, --login-api-key-client-secret=<sec>\n"
   printf "      API key client secret used to log in to bitwarden (default \"%s\")\n" "${login_api_key_client_secret}"
+  printf "  -K <path>, --session-key-save-file-path=<path>\n"
+  printf "      session key save file path, for reboot-persistence (default \"%s\")\n" "${session_key_save_file_path}"
   printf "EXIT CODES:\n"
   printf "    0  ok\n"
   printf "    1  usage, arguments, or options error\n"
@@ -74,7 +76,7 @@ print_usage() {
 }
 
 get_cmd_opts() {
-  while getopts ':hs:p:c:xkI:T:-:' option; do
+  while getopts ':hs:p:c:xkI:T:K:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  handle_print_help_menu ;;
@@ -85,6 +87,7 @@ get_cmd_opts() {
       k)  handle_check_login_and_unlock ;;
       I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
       T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
+      K)  handle_session_key_save_file_path "${short_opt_arg}" ;;
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
@@ -104,6 +107,8 @@ get_cmd_opts() {
             login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
             login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
             login-api-key-client-secret*)   handle_missing_long_option_arg "${long_opt_name}" ;;
+            session-key-save-file-path=?*)  handle_session_key_save_file_path "${long_opt_arg}" ;;
+            session-key-save-file-path*)    handle_missing_long_option_arg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
             *)                              handle_unknown_option "${long_opt_name}" ;;
           esac ;;
@@ -240,6 +245,10 @@ handle_login_api_key_client_id() {
 
 handle_login_api_key_client_secret() {
   login_api_key_client_secret="${1}"
+}
+
+handle_session_key_save_file_path() {
+  session_key_save_file_path="${1}"
 }
 
 try_with_exit() {
