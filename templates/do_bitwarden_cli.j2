@@ -6,7 +6,6 @@
 #            2. Keep Bitwarden vault login persistent between user logins.
 # Args/Opts: See usage (run with -h option).
 # Meta:      Script installed by ansible {{ role_name | basename }}.
-# Style:     ENV_VAR, global_var, Global_Readonly_Var, _func_local_var
 ################################################################################
 
 # GLOBAL VARS:
@@ -89,29 +88,29 @@ get_cmd_opts() {
       I)  handle_login_api_key_client_id "${short_opt_arg}" ;;
       T)  handle_login_api_key_client_secret "${short_opt_arg}" ;;
       K)  handle_session_key_save_file_path "${short_opt_arg}" ;;
-      -)  _long_opt_name="${OPTARG}"
-          _long_opt_arg="${OPTARG#*=}"
-          case ${_long_opt_name} in
+      -)  long_opt_name="${OPTARG}"
+          long_opt_arg="${OPTARG#*=}"
+          case ${long_opt_name} in
             help)                           handle_print_help_menu ;;
-            help=*)                         handle_illegal_long_option_arg "${_long_opt_name}" ;;
-            print-entry-and-copy-pswd=?*)   handle_print_entry_and_copy_pswd "${_long_opt_arg}" ;;
+            help=*)                         handle_illegal_long_option_arg "${long_opt_name}" ;;
+            print-entry-and-copy-pswd=?*)   handle_print_entry_and_copy_pswd "${long_opt_arg}" ;;
             print-entry-and-copy-pswd*)     handle_print_entry_and_copy_pswd ;;
-            print-entry=?*)                 handle_print_entry "${_long_opt_arg}" ;;
+            print-entry=?*)                 handle_print_entry "${long_opt_arg}" ;;
             print-entry*)                   handle_print_entry ;;
-            copy-entry-pswd=?*)             handle_copy_entry_pswd "${_long_opt_arg}" ;;
+            copy-entry-pswd=?*)             handle_copy_entry_pswd "${long_opt_arg}" ;;
             copy-entry-pswd*)               handle_copy_entry_pswd ;;
             lock-vault-and-logout=?*)       handle_lock_vault_and_logout ;;
-            lock-vault-and-logout*)         handle_illegal_long_option_arg "${_long_opt_name}" ;;
+            lock-vault-and-logout*)         handle_illegal_long_option_arg "${long_opt_name}" ;;
             check-login-and-unlock=?*)      handle_check_login_and_unlock ;;
-            check-login-and-unlock*)        handle_illegal_long_option_arg "${_long_opt_name}" ;;
-            login-api-key-client-id=?*)     handle_login_api_key_client_id "${_long_opt_arg}" ;;
-            login-api-key-client-id*)       handle_missing_long_option_arg "${_long_opt_name}" ;;
-            login-api-key-client-secret=?*) handle_login_api_key_client_secret "${_long_opt_arg}" ;;
-            login-api-key-client-secret*)   handle_missing_long_option_arg "${_long_opt_name}" ;;
-            session-key-save-file-path=?*)  handle_session_key_save_file_path "${_long_opt_arg}" ;;
-            session-key-save-file-path*)    handle_missing_long_option_arg "${_long_opt_name}" ;;
+            check-login-and-unlock*)        handle_illegal_long_option_arg "${long_opt_name}" ;;
+            login-api-key-client-id=?*)     handle_login_api_key_client_id "${long_opt_arg}" ;;
+            login-api-key-client-id*)       handle_missing_long_option_arg "${long_opt_name}" ;;
+            login-api-key-client-secret=?*) handle_login_api_key_client_secret "${long_opt_arg}" ;;
+            login-api-key-client-secret*)   handle_missing_long_option_arg "${long_opt_name}" ;;
+            session-key-save-file-path=?*)  handle_session_key_save_file_path "${long_opt_arg}" ;;
+            session-key-save-file-path*)    handle_missing_long_option_arg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
-            *)                              handle_unknown_option "${_long_opt_name}" ;;
+            *)                              handle_unknown_option "${long_opt_name}" ;;
           esac ;;
       \?) handle_unknown_option "${short_opt_arg}" ;;
     esac
@@ -120,55 +119,55 @@ get_cmd_opts() {
 
 get_cmd_args() {
   shift $((OPTIND - 1))
-  _possible_cmd_arg="${1}"
+  possible_cmd_arg="${1}"
 
-  if [ "${_possible_cmd_arg}" != '' ]; then
+  if [ "${possible_cmd_arg}" != '' ]; then
     if [ "${srch_text}" = '' ]; then
       srch_text="${1}"
     else
-      _err_msg="don't specify srch_text as both option arg and cmd arg"
-      quit_err_msg_with_help "${_err_msg}" 1
+      err_msg="don't specify srch_text as both option arg and cmd arg"
+      quit_err_msg_with_help "${err_msg}" 1
     fi
   fi
 }
 
 print_err_msg() {
-  _err_msg="${1}"
-  printf "ERROR:\n%s: %s\n" "${Prog_Name}" "${_err_msg}"
+  err_msg="${1}"
+  printf "ERROR:\n%s: %s\n" "${Prog_Name}" "${err_msg}"
 }
 
 quit_err_msg() {
-  _err_msg="${1}"
-  _err_code="${2}"
-  print_err_msg "${_err_msg}"
-  exit "${_err_code}"
+  err_msg="${1}"
+  err_code="${2}"
+  print_err_msg "${err_msg}"
+  exit "${err_code}"
 }
 
 quit_err_msg_with_help() {
-  _err_msg="${1}"
-  _err_code="${2}"
-  print_err_msg "${_err_msg}"
+  err_msg="${1}"
+  err_code="${2}"
+  print_err_msg "${err_msg}"
   printf "\n"
   print_usage
-  exit "${_err_code}"
+  exit "${err_code}"
 }
 
 handle_unknown_option() {
-  _short_opt_letter_or_long_opt_name="${1}"
-  _err_msg="unknown option \"${_short_opt_letter_or_long_opt_name}\""
-  quit_err_msg_with_help "${_err_msg}" 1
+  short_opt_letter_or_long_opt_name="${1}"
+  err_msg="unknown option \"${short_opt_letter_or_long_opt_name}\""
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
 handle_illegal_long_option_arg() {
-  _long_opt_name="${1}"
-  _err_msg="illegal argument in \"${_long_opt_name}\""
-  quit_err_msg_with_help "${_err_msg}" 1
+  long_opt_name="${1}"
+  err_msg="illegal argument in \"${long_opt_name}\""
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
 handle_missing_long_option_arg() {
-  _long_opt_name="${1}"
-  _err_msg="missing argument for option \"${_long_opt_name}\""
-  quit_err_msg_with_help "${_err_msg}" 1
+  long_opt_name="${1}"
+  err_msg="missing argument for option \"${long_opt_name}\""
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
 handle_print_help_menu() {
@@ -253,65 +252,65 @@ handle_session_key_save_file_path() {
 }
 
 try_with_exit() {
-  _cmd="${1}"
-  _err_msg="${2}"
-  _err_code="${3}"
-  eval "${_cmd}"
-  _exit_code="${?}"
-  if [ "${_exit_code}" != 0 ]; then
-    quit_err_msg "${_err_msg}" "${_err_code}"
+  cmd="${1}"
+  err_msg="${2}"
+  err_code="${3}"
+  eval "${cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    quit_err_msg "${err_msg}" "${err_code}"
   fi
 }
 
 try_with_fallback() {
-  _try_cmd="${1}"
-  _fallback_cmd="${2}"
-  _err_msg="${3}"
-  _err_code="${4}"
-  eval "${_try_cmd}"
-  _exit_code="${?}"
-  if [ "${_exit_code}" != 0 ]; then
-    eval "${_fallback_cmd}"
-    _exit_code="${?}"
-    if [ "${_exit_code}" != 0 ]; then
-      quit_err_msg "${_err_msg}" "${_err_code}"
+  try_cmd="${1}"
+  fallback_cmd="${2}"
+  err_msg="${3}"
+  err_code="${4}"
+  eval "${try_cmd}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    eval "${fallback_cmd}"
+    exit_code="${?}"
+    if [ "${exit_code}" != 0 ]; then
+      quit_err_msg "${err_msg}" "${err_code}"
     fi
   fi
 }
 
 create_session_key_save_file_as_req() {
   if [ ! -f "${session_key_save_file_path}" ]; then
-    _session_key_save_file_dir=$(dirname "${session_key_save_file_path}")
-    mkdir -p "${_session_key_save_file_dir}"
+    session_key_save_file_dir=$(dirname "${session_key_save_file_path}")
+    mkdir -p "${session_key_save_file_dir}"
     printf "%s" 'NoSessionKeyYet' > "${session_key_save_file_path}"
   fi
 }
 
 login_to_bitwarden_as_req() {
-  _show_prep_msg='printf "Logging in to Bitwarden vault...\n"'
-  _set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
-  _login_to_bw="${Bw_Cli_Cmd} login --raw --apikey"
-  _show_stat_msg='printf "Successfully logged in.\n"'
-  _run_login_cmd="${_show_prep_msg} && ${_set_api_key} ${_login_to_bw} && ${_show_stat_msg}"
+  show_prep_msg='printf "Logging in to Bitwarden vault...\n"'
+  set_api_key="BW_CLIENTID='${login_api_key_client_id}' BW_CLIENTSECRET='${login_api_key_client_secret}'"
+  login_to_bw="${Bw_Cli_Cmd} login --raw --apikey"
+  show_stat_msg='printf "Successfully logged in.\n"'
+  run_login_cmd="${show_prep_msg} && ${set_api_key} ${login_to_bw} && ${show_stat_msg}"
 
   try_with_fallback \
     "${Bw_Login_Check_Cmd}" \
-    "${_run_login_cmd}" \
+    "${run_login_cmd}" \
     "Bitwarden CLI error attempting to login" 10
 }
 
 unlock_bitwarden_vault_as_req() {
-  _session_key="$(cat "${session_key_save_file_path}")"
-  _run_unlock_check_cmd="${Bw_Unlock_Check_Cmd_Prefix} \"${_session_key}\" ${Bw_Unlock_Check_Cmd_Suffix}"
+  session_key="$(cat "${session_key_save_file_path}")"
+  run_unlock_check_cmd="${Bw_Unlock_Check_Cmd_Prefix} \"${session_key}\" ${Bw_Unlock_Check_Cmd_Suffix}"
 
-  _show_prep_msg='printf "Unlocking Bitwarden vault...\n"'
-  _unlock_bw_vault="${Bw_Cli_Cmd} unlock --raw > \"${session_key_save_file_path}\""
-  _show_stat_msg='printf "Successfully unlocked vault.\n"'
-  _run_unlock_cmd="${_show_prep_msg} && ${_unlock_bw_vault} && ${_show_stat_msg}"
+  show_prep_msg='printf "Unlocking Bitwarden vault...\n"'
+  unlock_bw_vault="${Bw_Cli_Cmd} unlock --raw > \"${session_key_save_file_path}\""
+  show_stat_msg='printf "Successfully unlocked vault.\n"'
+  run_unlock_cmd="${show_prep_msg} && ${unlock_bw_vault} && ${show_stat_msg}"
 
   try_with_fallback \
-    "${_run_unlock_check_cmd}" \
-    "${_run_unlock_cmd}" \
+    "${run_unlock_check_cmd}" \
+    "${run_unlock_cmd}" \
     "Bitwarden CLI error attempting to unlock vault" 10
 }
 
@@ -349,10 +348,10 @@ do_lock_vault_and_logout() {
   printf "Locking Bitwarden vault and logging out...\n"
   ${Bw_Cli_Cmd} logout 1> /dev/null 2>&1
 
-  _exit_code="${?}"
-  if [ "${_exit_code}" = 1 ]; then
+  exit_code="${?}"
+  if [ "${exit_code}" = 1 ]; then
     printf "Vault already locked, and already logged out.\n"
-  elif [ "${_exit_code}" != 0 ]; then
+  elif [ "${exit_code}" != 0 ]; then
     quit_err_msg "Bitwarden CLI error attempting to logout" 5
   else
     printf "Successfully locked vault and logged out.\n"
