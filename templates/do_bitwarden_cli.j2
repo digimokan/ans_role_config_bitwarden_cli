@@ -12,7 +12,10 @@
 # GLOBAL VARS:
 
 # Hard-Coded Settings
-readonly Prog_Name="$(basename "${0}")"
+readonly _Prog_Name="$(basename "${0}")"
+readonly _Jq_Cmd="{{ bitwarden_cli_exec_jq_cmd }}"
+readonly _Xsel_Cmd="{{ bitwarden_cli_exec_xsel_cmd }}"
+readonly _Fzf_Cmd="{{ bitwarden_cli_exec_fzf_cmd }}"
 
 # User Cmd Option Selections
 Print_Help_Menu='false'
@@ -39,13 +42,13 @@ readonly _Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
 
 PrintUsage() {
   printf "USAGE:\n"
-  printf "  %s  -h\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${Prog_Name}"
-  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${Prog_Name}"
+  printf "  %s  -h\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${_Prog_Name}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${_Prog_Name}"
   printf "ARGUMENTS:\n"
   printf "  [srch_text]\n"
   printf "      search for entry, print it, and copy password to clipboard\n"
@@ -134,7 +137,7 @@ GetCmdArgs() {
 
 PrintErrMsg() {
   err_msg="${1}"
-  printf "ERROR:\n%s: %s\n" "${Prog_Name}" "${err_msg}"
+  printf "ERROR:\n%s: %s\n" "${_Prog_Name}" "${err_msg}"
 }
 
 QuitErrMsg() {
@@ -316,6 +319,29 @@ DoPrintHelpMenu() {
 
 DoPrintEntryAndCopyPswd() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
+
+  if [ "${Srch_Text}" = '' ]; then
+    # search_opt=" --search \"${Srch_Text}\""
+    login_items="$("${_Bw_Cli_Cmd}" list items --session "${session_key}")"
+  else
+    # search_opt=''
+    login_items="$("${_Bw_Cli_Cmd}" list items --search "${Srch_Text}" --session "${session_key}")"
+  fi
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    QuitErrMsg "${err_msg}" "${err_code}"
+  fi
+
+  if [ "$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ". | length")" -eq 1 ]; then
+    single_target_login="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ".[0]")"
+  else
+    sel_name="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" --raw-output ".[].name" | "${_Fzf_Cmd}" --reverse)"
+    single_target_login="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ".[] | select(.name == \"${sel_name}\")")"
+  fi
+
+  echo "The logins here:"
+  echo "${single_target_login}"
+
   # logins="$(bw list items --search $1)"
   # if [ $(printf "%s" "$logins" | jq ". | length") -eq 1  ]; then
   #   login="$(printf "%s" "$logins" | jq ".[0]")"
