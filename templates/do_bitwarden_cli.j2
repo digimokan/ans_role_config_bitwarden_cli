@@ -320,26 +320,19 @@ DoPrintHelpMenu() {
 DoPrintEntryAndCopyPswd() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
 
-  if [ "${Srch_Text}" = '' ]; then
-    # search_opt=" --search \"${Srch_Text}\""
-    login_items="$("${_Bw_Cli_Cmd}" list items --session "${session_key}")"
-  else
-    # search_opt=''
-    login_items="$("${_Bw_Cli_Cmd}" list items --search "${Srch_Text}" --session "${session_key}")"
-  fi
+  login_items="$("${_Bw_Cli_Cmd}" list items --session "${session_key}")"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     QuitErrMsg "${err_msg}" "${err_code}"
   fi
 
-  if [ "$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ". | length")" -eq 1 ]; then
-    single_target_login="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ".[0]")"
-  else
-    sel_name="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" --raw-output ".[].name" | "${_Fzf_Cmd}" --reverse)"
-    single_target_login="$(printf "%s" "${login_items}" | "${_Jq_Cmd}" ".[] | select(.name == \"${sel_name}\")")"
-  fi
+  sel_name="$(printf "%s" "${login_items}" | \
+                "${_Jq_Cmd}" --raw-output ".[].name" | \
+                "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
+  single_target_login="$(printf "%s" "${login_items}" | \
+                           "${_Jq_Cmd}" ".[] | select(.name == \"${sel_name}\")")"
 
-  echo "The logins here:"
+  echo "The selected login here:"
   echo "${single_target_login}"
 
   # logins="$(bw list items --search $1)"
