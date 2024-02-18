@@ -340,23 +340,39 @@ GetEntryFromBitwardenVaultServer() {
 }
 
 PrintEntryReceivedFromServer() {
+  # See doc for types:    1 login, 2 secure-note, 3 card, 4 identity
+  # Ref for "Item Types": https://bitwarden.com/help/cli/#core-commands
+  # Ref for json fields:  https://bitwarden.com/help/condition-bitwarden-import/
+  type_login='1'
+  # type_secure_note='2'
+  type_card='3'
+  type_identity='4'
+  entry_type="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output ".type")"
+
   entry_name="$(
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output ".name")"
-  entry_username="$(
-    printf "%s" "${User_Selected_Entry}" | \
-      "${_Jq_Cmd}" --raw-output ".login.username")"
-  entry_password="$(
-    printf "%s" "${User_Selected_Entry}" | \
-      "${_Jq_Cmd}" --raw-output ".login.password")"
+  printf "Name:  %s\n" "${entry_name}"
+
+  if [ "${entry_type}" = "${type_login}" ]; then
+    entry_username="$(
+      printf "%s" "${User_Selected_Entry}" | \
+        "${_Jq_Cmd}" --raw-output ".login.username")"
+    printf "User:  %s\n" "${entry_username}"
+    entry_password="$(
+      printf "%s" "${User_Selected_Entry}" | \
+        "${_Jq_Cmd}" --raw-output ".login.password")"
+    printf "Pswd:  %s\n" "${entry_password}"
+  fi
+
   entry_notes="$(
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output ".notes")"
-
-  printf "Name: %s" "${entry_name}"
-  printf "User: %s" "${entry_username}"
-  printf "Pswd: %s" "${entry_password}"
-  printf "Note: %s" "${entry_notes}"
+  if [ "${entry_notes}" != 'null' ]; then
+    printf "Notes: %s\n" "${entry_notes}"
+  fi
 }
 
 DoPrintHelpMenu() {
