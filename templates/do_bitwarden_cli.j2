@@ -32,11 +32,18 @@ Login_Api_Key_Client_Secret='{{ bitwarden_cli_api_key_client_secret }}'
 Session_Key_Save_File_Path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 
 # Bitwarden CLI Cmds
+# Ref for "Item Types": https://bitwarden.com/help/cli/#core-commands
+# Ref for json fields:  https://bitwarden.com/help/condition-bitwarden-import/
 readonly _Bw_Cli_Cmd='bw'
 readonly _Bw_Redir_Devnull='1> /dev/null 2>&1'
 readonly _Bw_Login_Check_Cmd="${_Bw_Cli_Cmd} login --check ${_Bw_Redir_Devnull}"
 readonly _Bw_Unlock_Check_Cmd_Prefix="${_Bw_Cli_Cmd} unlock --check --session"
 readonly _Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
+readonly _Bw_Entry_Type_Login='1'
+# readonly _Bw_Entry_Type_Secure_Note='2'
+readonly _Bw_Entry_Type_Card='3'
+readonly _Bw_Entry_Type_Identity='4'
+readonly _Bw_Entry_Type_All='all'
 
 # LOCAL FUNCTIONS:
 
@@ -339,40 +346,60 @@ GetEntryFromBitwardenVaultServer() {
   fi
 }
 
-PrintEntryReceivedFromServer() {
-  # See doc for types:    1 login, 2 secure-note, 3 card, 4 identity
-  # Ref for "Item Types": https://bitwarden.com/help/cli/#core-commands
-  # Ref for json fields:  https://bitwarden.com/help/condition-bitwarden-import/
-  type_login='1'
-  # type_secure_note='2'
-  type_card='3'
-  type_identity='4'
-  entry_type="$(
+PrintEntryFieldIfNotNull() {
+  entry_label="${1}"
+  entry_json="${2}"
+  entry_type="${3}"
+
+  received_entry_type="$(
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output ".type")"
 
-  entry_name="$(
-    printf "%s" "${User_Selected_Entry}" | \
-      "${_Jq_Cmd}" --raw-output ".name")"
-  printf "Name:  %s\n" "${entry_name}"
+    if [ "${received_entry_type}" = "${_Bw_Entry_Type_All}" ] || \
+       [ "${received_entry_type}" = "${entry_type}" ]; then
+      received_entry_text="$(
+        printf "%s" "${User_Selected_Entry}" | \
+          "${_Jq_Cmd}" --raw-output "${entry_json}")"
+      if [ "${received_entry_text}" != 'null' ]; then
+        printf "%s %s\n" "${entry_label}" "${received_entry_text}"
+      fi
+    fi
+}
 
-  if [ "${entry_type}" = "${type_login}" ]; then
-    entry_username="$(
-      printf "%s" "${User_Selected_Entry}" | \
-        "${_Jq_Cmd}" --raw-output ".login.username")"
-    printf "User:  %s\n" "${entry_username}"
-    entry_password="$(
-      printf "%s" "${User_Selected_Entry}" | \
-        "${_Jq_Cmd}" --raw-output ".login.password")"
-    printf "Pswd:  %s\n" "${entry_password}"
-  fi
+PrintEntryReceivedFromServer() {
+  PrintEntryFieldIfNotNull "Name:" ".name" "${_Bw_Entry_Type_All}"
 
-  entry_notes="$(
-    printf "%s" "${User_Selected_Entry}" | \
-      "${_Jq_Cmd}" --raw-output ".notes")"
-  if [ "${entry_notes}" != 'null' ]; then
-    printf "Notes: %s\n" "${entry_notes}"
-  fi
+  PrintEntryFieldIfNotNull "User:" ".login.username" "${_Bw_Entry_Type_Login}"
+  PrintEntryFieldIfNotNull "Pswd:" ".login.password" "${_Bw_Entry_Type_Login}"
+  PrintEntryFieldIfNotNull "Pswd:" ".login.password" "${_Bw_Entry_Type_Login}"
+
+  PrintEntryFieldIfNotNull "Hldr:" ".card.cardholderName" "${_Bw_Entry_Type_Card}"
+  PrintEntryFieldIfNotNull "Brnd:" ".card.brand"          "${_Bw_Entry_Type_Card}"
+  PrintEntryFieldIfNotNull "Num: " ".card.number"         "${_Bw_Entry_Type_Card}"
+  PrintEntryFieldIfNotNull "Code:" ".card.code"           "${_Bw_Entry_Type_Card}"
+  PrintEntryFieldIfNotNull "ExpM:" ".card.expMonth"       "${_Bw_Entry_Type_Card}"
+  PrintEntryFieldIfNotNull "ExpY:" ".card.expYear"        "${_Bw_Entry_Type_Card}"
+
+  PrintEntryFieldIfNotNull "Ttl: " ".identity.title"          "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Fnm: " ".identity.firstName"      "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Mnm: " ".identity.middleName"     "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Lnm: " ".identity.lastName"       "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Adr1:" ".identity.address1"       "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Adr2:" ".identity.address2"       "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Adr3:" ".identity.address3"       "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "City:" ".identity.city"           "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Stat:" ".identity.state"          "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Zip: " ".identity.postalCode"     "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Ctry:" ".identity.country"        "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Comp:" ".identity.company"        "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Eml: " ".identity.email"          "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Phn: " ".identity.phone"          "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Ssn: " ".identity.ssn"            "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Unm: " ".identity.username"       "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Ppt: " ".identity.passportNumber" "${_Bw_Entry_Type_Identity}"
+  PrintEntryFieldIfNotNull "Lic: " ".identity.licenseNumber"  "${_Bw_Entry_Type_Identity}"
+
+  PrintEntryFieldIfNotNull "Note:" ".notes" "${_Bw_Entry_Type_All}"
 }
 
 DoPrintHelpMenu() {
@@ -387,6 +414,8 @@ DoPrintEntryAndCopyPswd() {
 
 DoPrintEntry() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
+  GetEntryFromBitwardenVaultServer "$@"
+  PrintEntryReceivedFromServer "$@"
 }
 
 DoCopyEntryPswd() {
