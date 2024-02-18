@@ -355,15 +355,15 @@ PrintEntryFieldIfNotNull() {
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output ".type")"
 
-    if [ "${entry_type}" = "${_Bw_Entry_Type_All}" ] || \
-       [ "${entry_type}" = "${received_entry_type}" ]; then
-      received_entry_text="$(
-        printf "%s" "${User_Selected_Entry}" | \
-          "${_Jq_Cmd}" --raw-output "${entry_json}")"
-      if [ "${received_entry_text}" != 'null' ]; then
-        printf "%s %s\n" "${entry_label}" "${received_entry_text}"
-      fi
+  if [ "${entry_type}" = "${_Bw_Entry_Type_All}" ] || \
+     [ "${entry_type}" = "${received_entry_type}" ]; then
+    received_entry_text="$(
+      printf "%s" "${User_Selected_Entry}" | \
+        "${_Jq_Cmd}" --raw-output "${entry_json}")"
+    if [ "${received_entry_text}" != 'null' ]; then
+      printf "%s %s\n" "${entry_label}" "${received_entry_text}"
     fi
+  fi
 }
 
 PrintEntryReceivedFromServer() {
