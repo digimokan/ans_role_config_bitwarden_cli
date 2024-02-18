@@ -339,6 +339,26 @@ GetEntryFromBitwardenVaultServer() {
   fi
 }
 
+PrintEntryReceivedFromServer() {
+  entry_name="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output ".name")"
+  entry_username="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output ".login.username")"
+  entry_password="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output ".login.password")"
+  entry_notes="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output ".notes")"
+
+  printf "Name: %s" "${entry_name}"
+  printf "User: %s" "${entry_username}"
+  printf "Pswd: %s" "${entry_password}"
+  printf "Note: %s" "${entry_notes}"
+}
+
 DoPrintHelpMenu() {
   PrintUsage
 }
@@ -346,9 +366,7 @@ DoPrintHelpMenu() {
 DoPrintEntryAndCopyPswd() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
   GetEntryFromBitwardenVaultServer "$@"
-
-  echo "The selected login here:"
-  echo "${User_Selected_Entry}"
+  PrintEntryReceivedFromServer "$@"
 }
 
 DoPrintEntry() {
