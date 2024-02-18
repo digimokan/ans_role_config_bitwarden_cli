@@ -255,6 +255,15 @@ HandleSessionKeySaveFilePath() {
   Session_Key_Save_File_Path="${1}"
 }
 
+QuitIfRcNot0() {
+  cmd_exit_code="${1}"
+  err_msg="${2}"
+  script_exit_code="${3}"
+  if [ "${cmd_exit_code}" != 0 ]; then
+    QuitErrMsg "${err_msg}" "${script_exit_code}"
+  fi
+}
+
 TryWithFallback() {
   try_cmd="${1}"
   fallback_cmd="${2}"
@@ -293,8 +302,8 @@ LoginToBitwardenAsReq() {
 }
 
 UnlockBitwardenVaultAsReq() {
-  session_key="$(cat "${Session_Key_Save_File_Path}")"
-  run_unlock_check_cmd="${_Bw_Unlock_Check_Cmd_Prefix} \"${session_key}\" ${_Bw_Unlock_Check_Cmd_Suffix}"
+  Session_Key="$(cat "${Session_Key_Save_File_Path}")"
+  run_unlock_check_cmd="${_Bw_Unlock_Check_Cmd_Prefix} \"${Session_Key}\" ${_Bw_Unlock_Check_Cmd_Suffix}"
 
   show_prep_msg='printf "Unlocking Bitwarden vault...\n"'
   unlock_bw_vault="${_Bw_Cli_Cmd} unlock --raw > \"${Session_Key_Save_File_Path}\""
@@ -313,35 +322,33 @@ LoginToBitwardenAndUnlockVaultAsReq() {
   UnlockBitwardenVaultAsReq "$@"
 }
 
+GetEntryFromBitwardenVaultServer() {
+  entries_from_server="$("${_Bw_Cli_Cmd}" list items --session "${Session_Key}")"
+  QuitIfRcNot0 "${?}" "Bitwarden CLI error getting entries from BW server" 5
+
+  user_selected_entry_name="$(
+    printf "%s" "${entries_from_server}" | \
+      "${_Jq_Cmd}" --raw-output ".[].name" | \
+      "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
+  User_Selected_Entry="$(
+    printf "%s" "${entries_from_server}" | \
+      "${_Jq_Cmd}" ".[] | select(.name == \"${user_selected_entry_name}\")")"
+
+  if [ "${User_Selected_Entry}" = '' ]; then
+    exit 0
+  fi
+}
+
 DoPrintHelpMenu() {
   PrintUsage
 }
 
 DoPrintEntryAndCopyPswd() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
-
-  login_items="$("${_Bw_Cli_Cmd}" list items --session "${session_key}")"
-  exit_code="${?}"
-  if [ "${exit_code}" != 0 ]; then
-    QuitErrMsg "${err_msg}" "${err_code}"
-  fi
-
-  sel_name="$(printf "%s" "${login_items}" | \
-                "${_Jq_Cmd}" --raw-output ".[].name" | \
-                "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
-  single_target_login="$(printf "%s" "${login_items}" | \
-                           "${_Jq_Cmd}" ".[] | select(.name == \"${sel_name}\")")"
+  GetEntryFromBitwardenVaultServer "$@"
 
   echo "The selected login here:"
-  echo "${single_target_login}"
-
-  # logins="$(bw list items --search $1)"
-  # if [ $(printf "%s" "$logins" | jq ". | length") -eq 1  ]; then
-  #   login="$(printf "%s" "$logins" | jq ".[0]")"
-  # else
-  #   name="$(printf "%s" "$logins" | jq --raw-output ".[].name" | fzf --reverse)"
-  #   login="$(printf "%s" "$logins" | jq ".[] | select(.name == \"$name\")")"
-  # fi
+  echo "${User_Selected_Entry}"
 }
 
 DoPrintEntry() {
