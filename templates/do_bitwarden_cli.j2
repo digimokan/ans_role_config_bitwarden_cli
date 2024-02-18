@@ -355,8 +355,8 @@ PrintEntryFieldIfNotNull() {
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output ".type")"
 
-    if [ "${received_entry_type}" = "${_Bw_Entry_Type_All}" ] || \
-       [ "${received_entry_type}" = "${entry_type}" ]; then
+    if [ "${entry_type}" = "${_Bw_Entry_Type_All}" ] || \
+       [ "${entry_type}" = "${received_entry_type}" ]; then
       received_entry_text="$(
         printf "%s" "${User_Selected_Entry}" | \
           "${_Jq_Cmd}" --raw-output "${entry_json}")"
@@ -370,7 +370,6 @@ PrintEntryReceivedFromServer() {
   PrintEntryFieldIfNotNull "Name:" ".name" "${_Bw_Entry_Type_All}"
 
   PrintEntryFieldIfNotNull "User:" ".login.username" "${_Bw_Entry_Type_Login}"
-  PrintEntryFieldIfNotNull "Pswd:" ".login.password" "${_Bw_Entry_Type_Login}"
   PrintEntryFieldIfNotNull "Pswd:" ".login.password" "${_Bw_Entry_Type_Login}"
 
   PrintEntryFieldIfNotNull "Hldr:" ".card.cardholderName" "${_Bw_Entry_Type_Card}"
