@@ -350,7 +350,6 @@ PrintEntryFieldIfNotNull() {
   entry_label="${1}"
   entry_json="${2}"
   entry_type="${3}"
-  entry_array_json="${4}"
 
   received_entry_type="$(
     printf "%s" "${User_Selected_Entry}" | \
@@ -360,7 +359,7 @@ PrintEntryFieldIfNotNull() {
      [ "${entry_type}" = "${received_entry_type}" ]; then
     received_entry_text="$(
       printf "%s" "${User_Selected_Entry}" | \
-        "${_Jq_Cmd}" --raw-output "${entry_json}[]${entry_array_json}")"
+        "${_Jq_Cmd}" --raw-output "${entry_json}")"
     if [ "${received_entry_text}" != 'null' ]; then
       first_line='true'
       printf "%s\n" "${received_entry_text}" | while IFS= read -r entry_text_line; do
