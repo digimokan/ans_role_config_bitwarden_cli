@@ -358,50 +358,71 @@ PrintEntryFieldIfNotNull() {
 
   if [ "${entry_type}" = "${_Bw_Entry_Type_All}" ] || \
      [ "${entry_type}" = "${received_entry_type}" ]; then
-    # entry field is a simple field
-    if [ "${entry_array_json}" = '' ]; then
-      received_entry_text="$(
-        printf "%s" "${User_Selected_Entry}" | \
-          "${_Jq_Cmd}" --raw-output "${entry_json}")"
-      if [ "${received_entry_text}" != 'null' ]; then
-        printf "%s %s\n" "${entry_label}" "${received_entry_text}"
-      fi
-    # entry field is an array field
-    else
-      received_entry_array_text="$(
-        printf "%s" "${User_Selected_Entry}" | \
-          "${_Jq_Cmd}" --raw-output "${entry_json}[]${entry_array_json}")"
-      if [ "${received_entry_array_text}" != 'null' ]; then
-        first_line='true'
-        # test printing here.........................................................
-        # echo "THE NUM CHARS TO INDENT: ${num_chars_to_indent}"
-        printf "%s\n" "${received_entry_array_text}" | while IFS= read -r entry_text_line; do
-          if [ "${first_line}" = 'true' ]; then
-            printf "%s %s\n" "${entry_label}" "${entry_text_line}"
-            first_line='false'
-          else
-            num_chars_to_indent="$(printf "%s" "${entry_label}" | wc -m)"
-            i=0
-            while [ "${i}" -lt "${num_chars_to_indent}" ]; do
-              printf " "
-              i=$((i + 1))
-            done
-            printf " %s\n" "${entry_text_line}"
-            # test printing here.........................................................
-            # printf " %5s\n" "${entry_text_line}"
-          fi
-        done
-      fi
+    received_entry_text="$(
+      printf "%s" "${User_Selected_Entry}" | \
+        "${_Jq_Cmd}" --raw-output "${entry_json}[]${entry_array_json}")"
+    if [ "${received_entry_text}" != 'null' ]; then
+      first_line='true'
+      printf "%s\n" "${received_entry_text}" | while IFS= read -r entry_text_line; do
+        if [ "${first_line}" = 'true' ]; then
+          printf "%s %s\n" "${entry_label}" "${entry_text_line}"
+          first_line='false'
+        else
+          num_chars_to_indent="$(printf "%s" "${entry_label}" | wc -m)"
+          i=0
+          while [ "${i}" -lt "${num_chars_to_indent}" ]; do
+            printf " "
+            i=$((i + 1))
+          done
+          printf " %s\n" "${entry_text_line}"
+        fi
+      done
     fi
+
+
+
+
+
+    # entry field is a simple field
+    # if [ "${entry_array_json}" = '' ]; then
+    #   received_entry_text="$(
+    #     printf "%s" "${User_Selected_Entry}" | \
+    #       "${_Jq_Cmd}" --raw-output "${entry_json}")"
+    #   if [ "${received_entry_text}" != 'null' ]; then
+    #     printf "%s %s\n" "${entry_label}" "${received_entry_text}"
+    #   fi
+    # # entry field is an array field
+    # else
+    #   received_entry_array_text="$(
+    #     printf "%s" "${User_Selected_Entry}" | \
+    #       "${_Jq_Cmd}" --raw-output "${entry_json}[]${entry_array_json}")"
+    #   if [ "${received_entry_array_text}" != 'null' ]; then
+    #     first_line='true'
+    #     printf "%s\n" "${received_entry_array_text}" | while IFS= read -r entry_text_line; do
+    #       if [ "${first_line}" = 'true' ]; then
+    #         printf "%s %s\n" "${entry_label}" "${entry_text_line}"
+    #         first_line='false'
+    #       else
+    #         num_chars_to_indent="$(printf "%s" "${entry_label}" | wc -m)"
+    #         i=0
+    #         while [ "${i}" -lt "${num_chars_to_indent}" ]; do
+    #           printf " "
+    #           i=$((i + 1))
+    #         done
+    #         printf " %s\n" "${entry_text_line}"
+    #       fi
+    #     done
+    #   fi
+    # fi
   fi
 }
 
 PrintEntryReceivedFromServer() {
   PrintEntryFieldIfNotNull "Name:" ".name" "${_Bw_Entry_Type_All}"
 
-  PrintEntryFieldIfNotNull "User:" ".login.username" "${_Bw_Entry_Type_Login}"
-  PrintEntryFieldIfNotNull "Pswd:" ".login.password" "${_Bw_Entry_Type_Login}"
-  PrintEntryFieldIfNotNull "Urls:" ".login.uris"     "${_Bw_Entry_Type_Login}" ".uri" 
+  PrintEntryFieldIfNotNull "User:" ".login.username"   "${_Bw_Entry_Type_Login}"
+  PrintEntryFieldIfNotNull "Pswd:" ".login.password"   "${_Bw_Entry_Type_Login}"
+  PrintEntryFieldIfNotNull "Urls:" ".login.uris[].uri" "${_Bw_Entry_Type_Login}"
 
   PrintEntryFieldIfNotNull "Hldr:" ".card.cardholderName" "${_Bw_Entry_Type_Card}"
   PrintEntryFieldIfNotNull "Brnd:" ".card.brand"          "${_Bw_Entry_Type_Card}"
