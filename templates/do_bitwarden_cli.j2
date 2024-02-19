@@ -371,8 +371,18 @@ PrintEntryFieldIfNotNull() {
       received_entry_array_text="$(
         printf "%s" "${User_Selected_Entry}" | \
           "${_Jq_Cmd}" --raw-output "${entry_json}[]${entry_array_json}")"
-      # testing the print here..............................
-      printf "%s %s\n" "${entry_label}" "${received_entry_array_text}"
+      if [ "${received_entry_array_text}" != 'null' ]; then
+        first_line='true'
+        num_chars_to_indent="$(printf "%s" "${entry_label}" | wc -m)"
+        printf "%s\n" "${received_entry_array_text}" | while IFS= read -r entry_text_line; do
+          if [ "${first_line}" = 'true' ]; then
+            printf "%s %s\n" "${entry_label}" "${entry_text_line}"
+            first_line='false'
+          else
+            printf " %${num_chars_to_indent}s\n" "${entry_text_line}"
+          fi
+        done
+      fi
     fi
   fi
 }
