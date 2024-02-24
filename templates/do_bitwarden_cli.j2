@@ -361,6 +361,7 @@ GetEntryTypeFromUserSelectedEntry() {
 PrintEntryFieldIfNotNull() {
   entry_label="${1}"
   entry_json="${2}"
+  num_chars_to_indent="${3}"
 
   received_entry_text="$(
     printf "%s" "${User_Selected_Entry}" | \
@@ -374,7 +375,6 @@ PrintEntryFieldIfNotNull() {
         printf "%s %s\n" "${entry_label}" "${entry_text_line}"
         first_line='false'
       else
-        num_chars_to_indent="$(printf "%s" "${entry_label}" | wc -m)"
         i=0
         while [ "${i}" -lt "${num_chars_to_indent}" ]; do
           printf " "
@@ -387,45 +387,47 @@ PrintEntryFieldIfNotNull() {
 }
 
 PrintEntryReceivedFromServer() {
-  PrintEntryFieldIfNotNull "Name:" ".name"
+  num_chars_to_indent=5
+
+  PrintEntryFieldIfNotNull "NAME:" ".name" "${num_chars_to_indent}"
 
   if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Login}" ]; then
-    PrintEntryFieldIfNotNull "User:" ".login.username"
-    PrintEntryFieldIfNotNull "Pswd:" ".login.password"
-    PrintEntryFieldIfNotNull "Urls:" ".login.uris[].uri"
+    PrintEntryFieldIfNotNull "USER:" ".login.username"   "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "PSWD:" ".login.password"   "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "URLS:" ".login.uris[].uri" "${num_chars_to_indent}"
   fi
 
   if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Card}" ]; then
-    PrintEntryFieldIfNotNull "Hldr:" ".card.cardholderName"
-    PrintEntryFieldIfNotNull "Brnd:" ".card.brand"
-    PrintEntryFieldIfNotNull "Num: " ".card.number"
-    PrintEntryFieldIfNotNull "Code:" ".card.code"
-    PrintEntryFieldIfNotNull "ExpM:" ".card.expMonth"
-    PrintEntryFieldIfNotNull "ExpY:" ".card.expYear"
+    PrintEntryFieldIfNotNull "HLDR:" ".card.cardholderName" "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "BRND:" ".card.brand"          "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "NUM: " ".card.number"         "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "CODE:" ".card.code"           "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "EXPM:" ".card.expMonth"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "EXPY:" ".card.expYear"        "${num_chars_to_indent}"
   fi
 
   if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Identity}" ]; then
-    PrintEntryFieldIfNotNull "Ttl: " ".identity.title"
-    PrintEntryFieldIfNotNull "Fnm: " ".identity.firstName"
-    PrintEntryFieldIfNotNull "Mnm: " ".identity.middleName"
-    PrintEntryFieldIfNotNull "Lnm: " ".identity.lastName"
-    PrintEntryFieldIfNotNull "Adr1:" ".identity.address1"
-    PrintEntryFieldIfNotNull "Adr2:" ".identity.address2"
-    PrintEntryFieldIfNotNull "Adr3:" ".identity.address3"
-    PrintEntryFieldIfNotNull "City:" ".identity.city"
-    PrintEntryFieldIfNotNull "Stat:" ".identity.state"
-    PrintEntryFieldIfNotNull "Zip: " ".identity.postalCode"
-    PrintEntryFieldIfNotNull "Ctry:" ".identity.country"
-    PrintEntryFieldIfNotNull "Comp:" ".identity.company"
-    PrintEntryFieldIfNotNull "Eml: " ".identity.email"
-    PrintEntryFieldIfNotNull "Phn: " ".identity.phone"
-    PrintEntryFieldIfNotNull "Ssn: " ".identity.ssn"
-    PrintEntryFieldIfNotNull "Unm: " ".identity.username"
-    PrintEntryFieldIfNotNull "Ppt: " ".identity.passportNumber"
-    PrintEntryFieldIfNotNull "Lic: " ".identity.licenseNumber"
+    PrintEntryFieldIfNotNull "TTL: " ".identity.title"          "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "FNM: " ".identity.firstName"      "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "MNM: " ".identity.middleName"     "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "LNM: " ".identity.lastName"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "ADR1:" ".identity.address1"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "ADR2:" ".identity.address2"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "ADR3:" ".identity.address3"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "CITY:" ".identity.city"           "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "STAT:" ".identity.state"          "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "ZIP: " ".identity.postalCode"     "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "CTRY:" ".identity.country"        "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "COMP:" ".identity.company"        "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "EML: " ".identity.email"          "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "PHN: " ".identity.phone"          "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "SSN: " ".identity.ssn"            "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "UNM: " ".identity.username"       "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "PPT: " ".identity.passportNumber" "${num_chars_to_indent}"
+    PrintEntryFieldIfNotNull "LIC: " ".identity.licenseNumber"  "${num_chars_to_indent}"
   fi
 
-  PrintEntryFieldIfNotNull "Note:" ".notes"
+  PrintEntryFieldIfNotNull "NOTE:" ".notes" "${num_chars_to_indent}"
 }
 
 DoPrintHelpMenu() {
