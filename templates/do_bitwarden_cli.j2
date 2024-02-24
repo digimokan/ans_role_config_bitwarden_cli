@@ -337,9 +337,12 @@ GetEntryFromBitwardenVaultServer() {
     printf "%s" "${entries_from_server}" | \
       "${_Jq_Cmd}" --raw-output ".[].name" | \
       "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
+  exit_code="${?}"
 
   if [ "${user_selected_entry_name}" = '' ]; then
     exit 0
+  else
+    QuitIfRcNot0 "${exit_code}" "jq/fzf error selecting entry-name from received vault entries" 80
   fi
 
   User_Selected_Entry="$(
