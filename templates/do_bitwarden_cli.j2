@@ -19,9 +19,9 @@ readonly _Fzf_Cmd="{{ bitwarden_cli_exec_fzf_cmd }}"
 
 # User Cmd Option Selections
 Print_Help_Menu='false'
-Print_Entry_And_Copy_Pswd='false'
+Print_Entry_And_Copy_Field='false'
 Print_Entry='false'
-Copy_Entry_Pswd='false'
+Copy_Entry_Field='false'
 Lock_Vault_And_Logout='false'
 Check_Login_And_Unlock='false'
 
@@ -57,16 +57,16 @@ PrintUsage() {
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${_Prog_Name}"
   printf "ARGUMENTS:\n"
   printf "  [srch_text]\n"
-  printf "      search for entry, print it, and copy password to clipboard\n"
+  printf "      search for entry, print it, and copy field to clipboard\n"
   printf "OPTIONS:\n"
   printf "  -h, --help\n"
   printf "      print this help message\n"
-  printf "  -s [srch_text], --print-entry-and-copy-pswd[=srch_text]\n"
-  printf "      search for entry, print it, and copy password to clipboard\n"
+  printf "  -s [srch_text], --print-entry-and-copy-field[=srch_text]\n"
+  printf "      search for entry, print it, and copy field to clipboard\n"
   printf "  -p [srch_text], --print-entry[=srch_text]\n"
   printf "      search for entry, and print it\n"
-  printf "  -c [srch_text], --copy-entry-pswd[=srch_text]\n"
-  printf "      search for entry, and copy password to clipboard\n"
+  printf "  -c [srch_text], --copy-entry-field[=srch_text]\n"
+  printf "      search for entry, and copy field (default: pswd/card#/ssn) to clipboard\n"
   printf "  -x, --lock-vault-and-logout\n"
   printf "      lock vault and logout (Note: vault remains unlocked between user logins)\n"
   printf "  -k, --check-login-and-unlock\n"
@@ -91,9 +91,9 @@ GetCmdOpts() {
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  HandlePrintHelpMenu ;;
-      s)  HandlePrintEntryAndCopyPswd "${short_opt_arg}" ;;
+      s)  HandlePrintEntryAndCopyField "${short_opt_arg}" ;;
       p)  HandlePrintEntry "${short_opt_arg}" ;;
-      c)  HandleCopyEntryPswd "${short_opt_arg}" ;;
+      c)  HandleCopyEntryField "${short_opt_arg}" ;;
       x)  HandleLockVaultAndLogout ;;
       k)  HandleCheckLoginAndUnlock ;;
       I)  HandleLoginApiKeyClientId "${short_opt_arg}" ;;
@@ -104,12 +104,12 @@ GetCmdOpts() {
           case ${long_opt_name} in
             help)                           HandlePrintHelpMenu ;;
             help=*)                         HandleIllegalLongOptionArg "${long_opt_name}" ;;
-            print-entry-and-copy-pswd=?*)   HandlePrintEntryAndCopyPswd "${long_opt_arg}" ;;
-            print-entry-and-copy-pswd*)     HandlePrintEntryAndCopyPswd ;;
+            print-entry-and-copy-field=?*)  HandlePrintEntryAndCopyField "${long_opt_arg}" ;;
+            print-entry-and-copy-field*)    HandlePrintEntryAndCopyField ;;
             print-entry=?*)                 HandlePrintEntry "${long_opt_arg}" ;;
             print-entry*)                   HandlePrintEntry ;;
-            copy-entry-pswd=?*)             HandleCopyEntryPswd "${long_opt_arg}" ;;
-            copy-entry-pswd*)               HandleCopyEntryPswd ;;
+            copy-entry-field=?*)            HandleCopyEntryField "${long_opt_arg}" ;;
+            copy-entry-field*)              HandleCopyEntryField ;;
             lock-vault-and-logout=?*)       HandleLockVaultAndLogout ;;
             lock-vault-and-logout*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
             check-login-and-unlock=?*)      HandleCheckLoginAndUnlock ;;
@@ -182,9 +182,9 @@ HandleMissingLongOptionArg() {
 }
 
 HandlePrintHelpMenu() {
-  if [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
+  if [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
-     [ "${Copy_Entry_Pswd}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -192,22 +192,22 @@ HandlePrintHelpMenu() {
   Print_Help_Menu='true'
 }
 
-HandlePrintEntryAndCopyPswd() {
+HandlePrintEntryAndCopyField() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
-     [ "${Copy_Entry_Pswd}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
-  Print_Entry_And_Copy_Pswd='true'
+  Print_Entry_And_Copy_Field='true'
   Srch_Text="${1}"
 }
 
 HandlePrintEntry() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
-     [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
-     [ "${Copy_Entry_Pswd}" = 'true' ] || \
+     [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -216,23 +216,23 @@ HandlePrintEntry() {
   Srch_Text="${1}"
 }
 
-HandleCopyEntryPswd() {
+HandleCopyEntryField() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
-     [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
+     [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
-  Copy_Entry_Pswd='true'
+  Copy_Entry_Field='true'
   Srch_Text="${1}"
 }
 
 HandleLockVaultAndLogout() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
-     [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
+     [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
-     [ "${Copy_Entry_Pswd}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
@@ -241,9 +241,9 @@ HandleLockVaultAndLogout() {
 
 HandleCheckLoginAndUnlock() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
-     [ "${Print_Entry_And_Copy_Pswd}" = 'true' ] || \
+     [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
-     [ "${Copy_Entry_Pswd}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
@@ -434,7 +434,7 @@ DoPrintHelpMenu() {
   PrintUsage
 }
 
-DoPrintEntryAndCopyPswd() {
+DoPrintEntryAndCopyField() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
   GetEntryFromBitwardenVaultServer "$@"
   GetEntryTypeFromUserSelectedEntry "$@"
@@ -448,7 +448,7 @@ DoPrintEntry() {
   PrintEntryReceivedFromServer "$@"
 }
 
-DoCopyEntryPswd() {
+DoCopyEntryField() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
 }
 
@@ -502,18 +502,18 @@ Main() {
   GetCmdArgs "$@"
   if [ "${Print_Help_Menu}" = 'true' ]; then
     DoPrintHelpMenu "$@"
-  elif [ "${Print_Entry_And_Copy_Pswd}" = 'true' ]; then
-    DoPrintEntryAndCopyPswd "$@"
+  elif [ "${Print_Entry_And_Copy_Field}" = 'true' ]; then
+    DoPrintEntryAndCopyField "$@"
   elif [ "${Print_Entry}" = 'true' ]; then
     DoPrintEntry "$@"
-  elif [ "${Copy_Entry_Pswd}" = 'true' ]; then
-    DoCopyEntryPswd "$@"
+  elif [ "${Copy_Entry_Field}" = 'true' ]; then
+    DoCopyEntryField "$@"
   elif [ "${Lock_Vault_And_Logout}" = 'true' ]; then
     DoLockVaultAndLogout "$@"
   elif [ "${Check_Login_And_Unlock}" = 'true' ]; then
     DoCheckLoginAndUnlock "$@"
   else
-    DoPrintEntryAndCopyPswd "$@"
+    DoPrintEntryAndCopyField "$@"
   fi
   exit 0
 }
