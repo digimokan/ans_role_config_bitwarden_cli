@@ -7,6 +7,9 @@
 # Args/Opts: See usage (run with -h option).
 # Meta:      Script installed by ansible {{ role_name | basename }}.
 # Style:     ENV_VAR, Global_Var, _Global_Readonly_Var, func_local_var, MyFunc
+# Refs:      https://www.drumm.sh/blog/2021/08/25/bw-cli/ (scripting)
+#            https://bitwarden.com/help/cli/#core-commands (entry types)
+#            https://bitwarden.com/help/condition-bitwarden-import/ (json fields)
 ################################################################################
 
 # GLOBAL VARS:
@@ -37,8 +40,6 @@ Login_Api_Key_Client_Secret='{{ bitwarden_cli_api_key_client_secret }}'
 Session_Key_Save_File_Path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 
 # Bitwarden CLI Cmds
-# Ref for "Item Types": https://bitwarden.com/help/cli/#core-commands
-# Ref for json fields:  https://bitwarden.com/help/condition-bitwarden-import/
 readonly _Bw_Cli_Cmd='bw'
 readonly _Bw_Redir_Devnull='1> /dev/null 2>&1'
 readonly _Bw_Login_Check_Cmd="${_Bw_Cli_Cmd} login --check ${_Bw_Redir_Devnull}"
