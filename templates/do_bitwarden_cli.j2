@@ -57,6 +57,7 @@ PrintUsage() {
   i=0
   while [ "${i}" -lt "${prog_name_num_chars}" ]; do
     leading_indent="${leading_indent} "
+    i=$((i + 1))
   done
 
   default_entry_fields="${_Default_Login_Entry_Field_Selection}"
