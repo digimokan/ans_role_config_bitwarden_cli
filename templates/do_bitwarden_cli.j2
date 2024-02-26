@@ -16,6 +16,10 @@ readonly _Prog_Name="$(basename "${0}")"
 readonly _Jq_Cmd="{{ bitwarden_cli_exec_jq_cmd }}"
 readonly _Xsel_Cmd="{{ bitwarden_cli_exec_xsel_cmd }}"
 readonly _Fzf_Cmd="{{ bitwarden_cli_exec_fzf_cmd }}"
+readonly _Default_Login_Entry_Field_Selection='password'
+readonly _Default_Card_Entry_Field_Selection='card-number'
+readonly _Default_Identity_Entry_Field_Selection='ssn'
+readonly _Default_Secure_Note_Entry_Field_Selection='notes'
 
 # User Cmd Option Selections
 Print_Help_Menu='false'
@@ -24,6 +28,7 @@ Print_Entry='false'
 Copy_Entry_Field='false'
 Lock_Vault_And_Logout='false'
 Check_Login_And_Unlock='false'
+User_Field_Selection='default'
 
 # User Cmd Option Args
 Srch_Text=''
@@ -40,19 +45,33 @@ readonly _Bw_Login_Check_Cmd="${_Bw_Cli_Cmd} login --check ${_Bw_Redir_Devnull}"
 readonly _Bw_Unlock_Check_Cmd_Prefix="${_Bw_Cli_Cmd} unlock --check --session"
 readonly _Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
 readonly _Bw_Entry_Type_Login='1'
-# readonly _Bw_Entry_Type_Secure_Note='2'
+readonly _Bw_Entry_Type_Secure_Note='2'
 readonly _Bw_Entry_Type_Card='3'
 readonly _Bw_Entry_Type_Identity='4'
 
 # LOCAL FUNCTIONS:
 
 PrintUsage() {
+  prog_name_num_chars="$(printf "%s" "${_Prog_Name}" | wc -m)"
+  leading_indent=''
+  i=0
+  while [ "${i}" -lt "${prog_name_num_chars}" ]; do
+    leading_indent="${leading_indent} "
+  done
+
+  default_entry_fields="${_Default_Login_Entry_Field_Selection}"
+  default_entry_fields="${default_entry_fields}/${_Default_Card_Entry_Field_Selection}"
+  default_entry_fields="${default_entry_fields}/${_Default_Identity_Entry_Field_Selection}"
+  default_entry_fields="${default_entry_fields}/${_Default_Secure_Note_Entry_Field_Selection}"
+
   printf "USAGE:\n"
   printf "  %s  -h\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N]\n" "${leading_indent}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N]\n" "${leading_indent}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${_Prog_Name}"
   printf "ARGUMENTS:\n"
@@ -66,11 +85,31 @@ PrintUsage() {
   printf "  -p [srch_text], --print-entry[=srch_text]\n"
   printf "      search for entry, and print it\n"
   printf "  -c [srch_text], --copy-entry-field[=srch_text]\n"
-  printf "      search for entry, and copy field (default: pswd/card#/ssn) to clipboard\n"
+  printf "      search for entry, and copy field (default: %s) to clipboard\n" "${default_entry_fields}"
   printf "  -x, --lock-vault-and-logout\n"
   printf "      lock vault and logout (Note: vault remains unlocked between user logins)\n"
   printf "  -k, --check-login-and-unlock\n"
   printf "      check if logged in to vault, and if vault is unlocked\n"
+  printf "  -U, --username-field=<field_text>\n"
+  printf "      select login-entry username field for copying\n"
+  printf "  -P, --password-field\n"
+  printf "      select login-entry password field for copying (default, for login entry)\n"
+  printf "  -W, --web-uri-field\n"
+  printf "      select login-entry web URI field for copying\n"
+  printf "  -H, --cardholder-name-field\n"
+  printf "      select card-entry card-holder name field for copying\n"
+  printf "  -B, --card-number-field=n"
+  printf "      select card-entry card number field for copying (default, for card entry)\n"
+  printf "  -C, --card-code-field\n"
+  printf "      select card-entry security code field for copying\n"
+  printf "  -S, --ssn-field\n"
+  printf "      select identity-entry social security number field for copying (default, for identity entry)\n"
+  printf "  -O, --passport-number-field\n"
+  printf "      select identity-entry passport number field for copying\n"
+  printf "  -L, --drivers-license-field\n"
+  printf "      select identity-entry driver's license number field for copying\n"
+  printf "  -N, --notes-field\n"
+  printf "      select notes-entry notes field for copying (default, for notes entry)\n"
   printf "  -I <id>, --login-api-key-client-id=<id>\n"
   printf "      API key client id used to log in to bitwarden (default \"%s\")\n" "${Login_Api_Key_Client_Id}"
   printf "  -T <sec>, --login-api-key-client-secret=<sec>\n"
@@ -83,11 +122,12 @@ PrintUsage() {
   printf "    5  Bitwarden CLI operation error\n"
   printf "   10  Bitwarden CLI vault login/unlock error\n"
   printf "   80  jq/fzf error parsing text received from vault\n"
+  printf "  120  xsel error copying text to clipboard\n"
   printf "  255  unknown error\n"
 }
 
 GetCmdOpts() {
-  while getopts ':hs:p:c:xkI:T:K:-:' option; do
+  while getopts ':hs:p:c:xkUPWHBCSOLNI:T:K:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  HandlePrintHelpMenu ;;
@@ -96,6 +136,16 @@ GetCmdOpts() {
       c)  HandleCopyEntryField "${short_opt_arg}" ;;
       x)  HandleLockVaultAndLogout ;;
       k)  HandleCheckLoginAndUnlock ;;
+      U)  HandleUsernameField "${short_opt_arg}" ;;
+      P)  HandlePasswordField "${short_opt_arg}" ;;
+      W)  HandleWebUriField "${short_opt_arg}" ;;
+      H)  HandleCardholderNameField "${short_opt_arg}" ;;
+      B)  HandleCardNumberField "${short_opt_arg}" ;;
+      C)  HandleCardCodeField "${short_opt_arg}" ;;
+      S)  HandleSsnField "${short_opt_arg}" ;;
+      O)  HandlePassportNumberField "${short_opt_arg}" ;;
+      L)  HandleDriversLicenseNumberField "${short_opt_arg}" ;;
+      N)  HandleNotesField "${short_opt_arg}" ;;
       I)  HandleLoginApiKeyClientId "${short_opt_arg}" ;;
       T)  HandleLoginApiKeyClientSecret "${short_opt_arg}" ;;
       K)  HandleSessionKeySaveFilePath "${short_opt_arg}" ;;
@@ -114,6 +164,26 @@ GetCmdOpts() {
             lock-vault-and-logout*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
             check-login-and-unlock=?*)      HandleCheckLoginAndUnlock ;;
             check-login-and-unlock*)        HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            username-field=?*)              HandleUsernameField "${long_opt_arg}" ;;
+            username-field*)                HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            password-field=?*)              HandlePasswordField "${long_opt_arg}" ;;
+            password-field*)                HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            web-uri-field=?*)               HandleWebUriField "${long_opt_arg}" ;;
+            web-uri-field*)                 HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            cardholder-name-field=?*)       HandleCardholderNameField "${long_opt_arg}" ;;
+            cardholder-name-field*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            card-number-field=?*)           HandleCardNumberField "${long_opt_arg}" ;;
+            card-number-field*)             HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            card-code-field=?*)             HandleCardCodeField "${long_opt_arg}" ;;
+            card-code-field*)               HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            ssn-field=?*)                   HandleSsnField "${long_opt_arg}" ;;
+            ssn-field*)                     HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            passport-number-field=?*)       HandlePassportNumberField "${long_opt_arg}" ;;
+            passport-number-field*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            drivers-license-field=?*)       HandleDriversLicenseNumberField "${long_opt_arg}" ;;
+            drivers-license-field*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            notes-field=?*)                 HandleNotesField "${long_opt_arg}" ;;
+            notes-field*)                   HandleIllegalLongOptionArg "${long_opt_name}" ;;
             login-api-key-client-id=?*)     HandleLoginApiKeyClientId "${long_opt_arg}" ;;
             login-api-key-client-id*)       HandleMissingLongOptionArg "${long_opt_name}" ;;
             login-api-key-client-secret=?*) HandleLoginApiKeyClientSecret "${long_opt_arg}" ;;
@@ -248,6 +318,46 @@ HandleCheckLoginAndUnlock() {
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Check_Login_And_Unlock='true'
+}
+
+HandleUsernameField() {
+  User_Field_Selection='username'
+}
+
+HandlePasswordField() {
+  User_Field_Selection='password'
+}
+
+HandleWebUriField() {
+  User_Field_Selection='web-uri'
+}
+
+HandleCardholderNameField() {
+  User_Field_Selection='cardholder-name'
+}
+
+HandleCardNumberField() {
+  User_Field_Selection='card-number'
+}
+
+HandleCardCodeField() {
+  User_Field_Selection='card-security-code'
+}
+
+HandleSsnField() {
+  User_Field_Selection='ssn'
+}
+
+HandlePassportNumberField() {
+  User_Field_Selection='passport-number'
+}
+
+HandleDriversLicenseNumberField() {
+  User_Field_Selection='drivers-license-number'
+}
+
+HandleNotesField() {
+  User_Field_Selection='notes'
 }
 
 HandleLoginApiKeyClientId() {
@@ -430,6 +540,82 @@ PrintEntryReceivedFromServer() {
   PrintEntryFieldIfNotNull "NOTE:" ".notes" "${num_chars_to_indent}"
 }
 
+CheckSelectedEntryFieldIsValidForEntryType() {
+  if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Login}" ]; then
+    if [ "${User_Field_Selection}" = 'default' ]; then
+      User_Field_Selection="${_Default_Login_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" != 'username' ] && \
+         [ "${User_Field_Selection}" != 'password' ] && \
+         [ "${User_Field_Selection}" != 'web-uri' ]  && \
+         [ "${User_Field_Selection}" != 'notes' ]; then
+      QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
+    fi
+  elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Card}" ]; then
+    if [ "${User_Field_Selection}" = 'default' ]; then
+      User_Field_Selection="${_Default_Card_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" != 'cardholder-name' ] && \
+         [ "${User_Field_Selection}" != 'card-number' ] && \
+         [ "${User_Field_Selection}" != 'card-security-code' ] && \
+         [ "${User_Field_Selection}" != 'notes' ]; then
+      QuitErrMsg "Invalid field selected for entry of type \"Card\"" 1
+    fi
+  elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Identity}" ]; then
+    if [ "${User_Field_Selection}" = 'default' ]; then
+      User_Field_Selection="${_Default_Identity_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" != 'ssn' ] && \
+         [ "${User_Field_Selection}" != 'passport-number' ] && \
+         [ "${User_Field_Selection}" != 'drivers-license-number' ] && \
+         [ "${User_Field_Selection}" != 'notes' ]; then
+      QuitErrMsg "Invalid field selected for entry of type \"Identity\"" 1
+    fi
+  elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Secure_Note}" ]; then
+    if [ "${User_Field_Selection}" = 'default' ]; then
+      User_Field_Selection="${_Default_Secure_Note_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" != 'notes' ]; then
+      QuitErrMsg "Invalid field selected for entry of type \"Notes\"" 1
+    fi
+  else
+    QuitErrMsg "Unknown entry type received from Bitwarden server" 255
+  fi
+}
+
+GetSelectedEntryFieldFromReceivedEntry() {
+  if [ "${User_Field_Selection}" = 'username' ]; then
+    entry_field_json='.login.username'
+  elif [ "${User_Field_Selection}" = 'password' ]; then
+    entry_field_json='.login.password'
+  elif [ "${User_Field_Selection}" = 'web-uri' ]; then
+    entry_field_json='.login.uris[0].uri'
+  elif [ "${User_Field_Selection}" = 'cardholder-name' ]; then
+    entry_field_json='.card.cardholderName'
+  elif [ "${User_Field_Selection}" = 'card-number' ]; then
+    entry_field_json='.card.number'
+  elif [ "${User_Field_Selection}" = 'card-security-code' ]; then
+    entry_field_json='.card.code'
+  elif [ "${User_Field_Selection}" = 'ssn' ]; then
+    entry_field_json='.identity.ssn'
+  elif [ "${User_Field_Selection}" = 'passport-number' ]; then
+    entry_field_json='.identity.passportNumber'
+  elif [ "${User_Field_Selection}" = 'drivers-license-number' ]; then
+    entry_field_json='.identity.licenseNumber'
+  elif [ "${User_Field_Selection}" = 'notes' ]; then
+    entry_field_json='.notes'
+  else
+    QuitErrMsg "uknown mapping of user-selected field to field json" 255
+  fi
+
+  Received_Entry_Field="$(
+    printf "%s" "${User_Selected_Entry}" | \
+      "${_Jq_Cmd}" --raw-output "${entry_field_json}")"
+  QuitIfRcNot0 "${?}" "jq error extracting selected field from received entry" 80
+}
+
+CopySelectedFieldToClipboard() {
+  printf "Copying entry \"%s\" field to clipboard..." "${User_Field_Selection}"
+  printf "%s" "${Received_Entry_Field}" | "${_Xsel_Cmd}" --input --clipboard
+  QuitIfRcNot0 "${?}" "xsel error copying text to clipboard " 120
+}
+
 DoPrintHelpMenu() {
   PrintUsage
 }
@@ -439,6 +625,9 @@ DoPrintEntryAndCopyField() {
   GetEntryFromBitwardenVaultServer "$@"
   GetEntryTypeFromUserSelectedEntry "$@"
   PrintEntryReceivedFromServer "$@"
+  CheckSelectedEntryFieldIsValidForEntryType "$@"
+  GetSelectedEntryFieldFromReceivedEntry "$@"
+  CopySelectedFieldToClipboard "$@"
 }
 
 DoPrintEntry() {
@@ -450,6 +639,11 @@ DoPrintEntry() {
 
 DoCopyEntryField() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
+  GetEntryFromBitwardenVaultServer "$@"
+  GetEntryTypeFromUserSelectedEntry "$@"
+  CheckSelectedEntryFieldIsValidForEntryType  "$@"
+  GetSelectedEntryFieldFromReceivedEntry "$@"
+  CopySelectedFieldToClipboard "$@"
 }
 
 DoLockVaultAndLogout() {
