@@ -23,6 +23,7 @@ readonly _Default_Login_Entry_Field_Selection='password'
 readonly _Default_Card_Entry_Field_Selection='card-number'
 readonly _Default_Identity_Entry_Field_Selection='ssn'
 readonly _Default_Secure_Note_Entry_Field_Selection='notes'
+readonly _Bitwarden_User_Name='{{ bitwarden_user_name }}'
 
 # User Cmd Option Selections
 Print_Help_Menu='false'
@@ -33,6 +34,7 @@ Login_To_Vault_And_Unlock='false'
 Lock_Vault_And_Logout='false'
 Check_Login_And_Unlock='false'
 User_Field_Selection='default'
+Allow_Non_Default_User='false'
 
 # User Cmd Option Args
 Srch_Text=''
@@ -122,6 +124,8 @@ PrintUsage() {
   printf "      API key client secret used to log in to bitwarden (default \"%s\")\n" "${Login_Api_Key_Client_Secret}"
   printf "  -K <path>, --session-key-save-file-path=<path>\n"
   printf "      session key save file path, for reboot-persistence (default \"%s\")\n" "${Session_Key_Save_File_Path}"
+  printf "  -Y, --allow-non-default-user\n"
+  printf "      commands should be run as user '%s', but this overrides\n" "${_Bitwarden_User_Name}"
   printf "EXIT CODES:\n"
   printf "    0  ok\n"
   printf "    1  usage, arguments, or options error\n"
@@ -133,7 +137,7 @@ PrintUsage() {
 }
 
 GetCmdOpts() {
-  while getopts ':hs:p:c:lxkUPWHBCSOLNI:T:K:-:' option; do
+  while getopts ':hs:p:c:lxkUPWHBCSOLNI:T:K:Y-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  HandlePrintHelpMenu ;;
@@ -156,6 +160,7 @@ GetCmdOpts() {
       I)  HandleLoginApiKeyClientId "${short_opt_arg}" ;;
       T)  HandleLoginApiKeyClientSecret "${short_opt_arg}" ;;
       K)  HandleSessionKeySaveFilePath "${short_opt_arg}" ;;
+      Y)  HandleAllowNonDefaultUser ;;
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
@@ -199,6 +204,8 @@ GetCmdOpts() {
             login-api-key-client-secret*)   HandleMissingLongOptionArg "${long_opt_name}" ;;
             session-key-save-file-path=?*)  HandleSessionKeySaveFilePath "${long_opt_arg}" ;;
             session-key-save-file-path*)    HandleMissingLongOptionArg "${long_opt_name}" ;;
+            allow-non-default-user)         HandleAllowNonDefaultUser ;;
+            allow-non-default-user=*)       HandleIllegalLongOptionArg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
             *)                              HandleUnknownOption "${long_opt_name}" ;;
           esac ;;
@@ -397,6 +404,10 @@ HandleLoginApiKeyClientSecret() {
 
 HandleSessionKeySaveFilePath() {
   Session_Key_Save_File_Path="${1}"
+}
+
+HandleAllowNonDefaultUser() {
+  Allow_Non_Default_User='true'
 }
 
 QuitIfRcNot0() {
@@ -648,6 +659,12 @@ CopySelectedFieldToClipboard() {
   QuitIfRcNot0 "${?}" "xsel error copying text to clipboard " 120
 }
 
+CheckRunningAsDefaultUser() {
+  if [ "$(id -un)" != "${_Bitwarden_User_Name}" ] && [ "${Allow_Non_Default_User}" = 'false' ]; then
+    quit_err_msg_with_help "run this script as user '${_Bitwarden_User_Name}', or use -U to override" 1
+  fi
+}
+
 DoPrintHelpMenu() {
   PrintUsage
 }
@@ -734,6 +751,7 @@ DoCheckLoginAndUnlock() {
 Main() {
   GetCmdOpts "$@"
   GetCmdArgs "$@"
+  CheckRunningAsDefaultUser "$@"
   if [ "${Print_Help_Menu}" = 'true' ]; then
     DoPrintHelpMenu "$@"
   elif [ "${Print_Entry_And_Copy_Field}" = 'true' ]; then
