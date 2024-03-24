@@ -29,6 +29,7 @@ Print_Help_Menu='false'
 Print_Entry_And_Copy_Field='false'
 Print_Entry='false'
 Copy_Entry_Field='false'
+Login_To_Vault_And_Unlock='false'
 Lock_Vault_And_Logout='false'
 Check_Login_And_Unlock='false'
 User_Field_Selection='default'
@@ -74,6 +75,7 @@ PrintUsage() {
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${_Prog_Name}"
   printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N]\n" "${leading_indent}"
+  printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -l\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${_Prog_Name}"
   printf "ARGUMENTS:\n"
@@ -88,6 +90,8 @@ PrintUsage() {
   printf "      search for entry, and print it\n"
   printf "  -c [srch_text], --copy-entry-field[=srch_text]\n"
   printf "      search for entry, and copy field (default: %s) to clipboard\n" "${default_entry_fields}"
+  printf "  -l, --login-to-vault-and-unlock\n"
+  printf "      log in to vault and unlock it (normally done automatically)\n"
   printf "  -x, --lock-vault-and-logout\n"
   printf "      lock vault and logout (Note: vault remains unlocked between user logins)\n"
   printf "  -k, --check-login-and-unlock\n"
@@ -129,13 +133,14 @@ PrintUsage() {
 }
 
 GetCmdOpts() {
-  while getopts ':hs:p:c:xkUPWHBCSOLNI:T:K:-:' option; do
+  while getopts ':hs:p:c:lxkUPWHBCSOLNI:T:K:-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  HandlePrintHelpMenu ;;
       s)  HandlePrintEntryAndCopyField "${short_opt_arg}" ;;
       p)  HandlePrintEntry "${short_opt_arg}" ;;
       c)  HandleCopyEntryField "${short_opt_arg}" ;;
+      l)  HandleLoginToVaultAndUnlock ;;
       x)  HandleLockVaultAndLogout ;;
       k)  HandleCheckLoginAndUnlock ;;
       U)  HandleUsernameField "${short_opt_arg}" ;;
@@ -162,6 +167,8 @@ GetCmdOpts() {
             print-entry*)                   HandlePrintEntry ;;
             copy-entry-field=?*)            HandleCopyEntryField "${long_opt_arg}" ;;
             copy-entry-field*)              HandleCopyEntryField ;;
+            login-to-vault-and-unlock=?*)   HandleLoginToVaultAndUnlock ;;
+            login-to-vault-and-unlock*)     HandleIllegalLongOptionArg "${long_opt_name}" ;;
             lock-vault-and-logout=?*)       HandleLockVaultAndLogout ;;
             lock-vault-and-logout*)         HandleIllegalLongOptionArg "${long_opt_name}" ;;
             check-login-and-unlock=?*)      HandleCheckLoginAndUnlock ;;
@@ -257,6 +264,7 @@ HandlePrintHelpMenu() {
   if [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -268,6 +276,7 @@ HandlePrintEntryAndCopyField() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -280,6 +289,7 @@ HandlePrintEntry() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -292,6 +302,7 @@ HandleCopyEntryField() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
@@ -300,11 +311,24 @@ HandleCopyEntryField() {
   Srch_Text="${1}"
 }
 
+HandleLoginToVaultAndUnlock() {
+  if [ "${Print_Help_Menu}" = 'true' ] || \
+     [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
+     [ "${Print_Entry}" = 'true' ] || \
+     [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Lock_Vault_And_Logout}" = 'true' ] || \
+     [ "${Check_Login_And_Unlock}" = 'true' ]; then
+    QuitErrMsgWithHelp "mutually exclusive options selected" 1
+  fi
+  Login_To_Vault_And_Unlock='true'
+}
+
 HandleLockVaultAndLogout() {
   if [ "${Print_Help_Menu}" = 'true' ] || \
      [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Check_Login_And_Unlock}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
@@ -316,6 +340,7 @@ HandleCheckLoginAndUnlock() {
      [ "${Print_Entry_And_Copy_Field}" = 'true' ] || \
      [ "${Print_Entry}" = 'true' ] || \
      [ "${Copy_Entry_Field}" = 'true' ] || \
+     [ "${Login_To_Vault_And_Unlock}" = 'true' ] || \
      [ "${Lock_Vault_And_Logout}" = 'true' ]; then
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
@@ -441,7 +466,13 @@ LoginToBitwardenAndUnlockVaultAsReq() {
   UnlockBitwardenVaultAsReq "$@"
 }
 
-GetEntryFromBitwardenVaultServer() {
+SyncLocalVaultFromServerVault() {
+  # ${_Bw_Cli_Cmd} sync --session "${Session_Key}" 1> /dev/null 2>&1
+  ${_Bw_Cli_Cmd} sync --session "${Session_Key}"
+  QuitIfRcNot0 "${?}" "Bitwarden CLI error syncing local vault from BW server vault" 5
+}
+
+GetEntryFromLocalVault() {
   entries_from_server="$("${_Bw_Cli_Cmd}" list items --session "${Session_Key}")"
   QuitIfRcNot0 "${?}" "Bitwarden CLI error getting entries from BW server" 5
 
@@ -498,7 +529,7 @@ PrintEntryFieldIfNotNull() {
   fi
 }
 
-PrintEntryReceivedFromServer() {
+PrintEntryReceivedFromLocalVault() {
   num_chars_to_indent=5
 
   PrintEntryFieldIfNotNull "NAME:" ".name" "${num_chars_to_indent}"
@@ -624,9 +655,10 @@ DoPrintHelpMenu() {
 
 DoPrintEntryAndCopyField() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
-  GetEntryFromBitwardenVaultServer "$@"
+  SyncLocalVaultFromServerVault "$@"
+  GetEntryFromLocalVault "$@"
   GetEntryTypeFromUserSelectedEntry "$@"
-  PrintEntryReceivedFromServer "$@"
+  PrintEntryReceivedFromLocalVault "$@"
   CheckSelectedEntryFieldIsValidForEntryType "$@"
   GetSelectedEntryFieldFromReceivedEntry "$@"
   CopySelectedFieldToClipboard "$@"
@@ -634,18 +666,25 @@ DoPrintEntryAndCopyField() {
 
 DoPrintEntry() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
-  GetEntryFromBitwardenVaultServer "$@"
+  SyncLocalVaultFromServerVault "$@"
+  GetEntryFromLocalVault "$@"
   GetEntryTypeFromUserSelectedEntry "$@"
-  PrintEntryReceivedFromServer "$@"
+  PrintEntryReceivedFromLocalVault "$@"
 }
 
 DoCopyEntryField() {
   LoginToBitwardenAndUnlockVaultAsReq "$@"
-  GetEntryFromBitwardenVaultServer "$@"
+  SyncLocalVaultFromServerVault "$@"
+  GetEntryFromLocalVault "$@"
   GetEntryTypeFromUserSelectedEntry "$@"
   CheckSelectedEntryFieldIsValidForEntryType  "$@"
   GetSelectedEntryFieldFromReceivedEntry "$@"
   CopySelectedFieldToClipboard "$@"
+}
+
+DoLoginToVaultAndUnlock() {
+  LoginToBitwardenAndUnlockVaultAsReq "$@"
+  SyncLocalVaultFromServerVault "$@"
 }
 
 DoLockVaultAndLogout() {
@@ -704,6 +743,8 @@ Main() {
     DoPrintEntry "$@"
   elif [ "${Copy_Entry_Field}" = 'true' ]; then
     DoCopyEntryField "$@"
+  elif [ "${Login_To_Vault_And_Unlock}" = 'true' ]; then
+    DoLoginToVaultAndUnlock "$@"
   elif [ "${Lock_Vault_And_Logout}" = 'true' ]; then
     DoLockVaultAndLogout "$@"
   elif [ "${Check_Login_And_Unlock}" = 'true' ]; then
