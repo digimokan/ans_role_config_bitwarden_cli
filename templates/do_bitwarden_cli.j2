@@ -467,8 +467,7 @@ LoginToBitwardenAndUnlockVaultAsReq() {
 }
 
 SyncLocalVaultFromServerVault() {
-  # ${_Bw_Cli_Cmd} sync --session "${Session_Key}" 1> /dev/null 2>&1
-  ${_Bw_Cli_Cmd} sync --session "${Session_Key}"
+  ${_Bw_Cli_Cmd} sync --session "${Session_Key}" 1> /dev/null 2>&1
   QuitIfRcNot0 "${?}" "Bitwarden CLI error syncing local vault from BW server vault" 5
 }
 
