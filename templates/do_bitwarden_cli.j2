@@ -661,7 +661,8 @@ CopySelectedFieldToClipboard() {
 
 CheckRunningAsDefaultUser() {
   if [ "$(id -un)" != "${_Bitwarden_User_Name}" ] && [ "${Allow_Non_Default_User}" = 'false' ]; then
-    quit_err_msg_with_help "run this script as user '${_Bitwarden_User_Name}', or use -U to override" 1
+    err_msg="run this script as user '${_Bitwarden_User_Name}', or use -U to override"
+    QuitErrMsg "${err_msg}" 1
   fi
 }
 
