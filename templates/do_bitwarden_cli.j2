@@ -475,10 +475,13 @@ LoginToBitwardenAndUnlockVaultAsReq() {
   CreateSessionKeySaveFileAsReq "$@"
   LoginToBitwardenAsReq "$@"
   UnlockBitwardenVaultAsReq "$@"
+  echo "finished unlocking as req."
 }
 
 SyncLocalVaultFromServerVault() {
+  echo "starting sync command."
   ${_Bw_Cli_Cmd} sync --session "${Session_Key}" 1> /dev/null 2>&1
+  echo "finished sync command."
   QuitIfRcNot0 "${?}" "Bitwarden CLI error syncing local vault from BW server vault" 5
 }
 
