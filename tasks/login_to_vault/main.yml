@@ -1,5 +1,5 @@
 - name: "Run Bitwarden utility script with login-and-unlock-vault option"
-  ansible.builtin.command:
+  ansible.builtin.shell:
     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
   changed_when: false
   become: true
