@@ -14,8 +14,8 @@
 
 - name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
   ansible.builtin.pause:
-    # prompt: "Enter the Bitwarden user master password"
-    # echo: true
+    prompt: "Enter the Bitwarden user master password"
+    echo: false
     # seconds: 30
   register: bitwarden_master_password
   when: login_unlock_result is changed
