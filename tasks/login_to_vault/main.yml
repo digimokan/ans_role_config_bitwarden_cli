@@ -19,6 +19,8 @@
         prompt: "Enter the new password for user 'test'"
         echo: true
       register: new_password
+      become: true
+      become_user: 'root'
 
 # - name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
 #   ansible.builtin.pause:
