@@ -15,16 +15,16 @@
 - name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
   ansible.builtin.pause:
     prompt: "Enter the Bitwarden user master password"
-    echo: false
+    # echo: false
     # seconds: 30
   register: bitwarden_master_password
-  when: login_unlock_result is changed
+  # when: login_unlock_result is changed
 
-- name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
-  ansible.builtin.command:
-    cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
-    stdin: "{{ bitwarden_master_password.user_input }}"
-  become: true
-  become_user: "{{ bitwarden_user_name }}"
-  when: login_unlock_result is changed
+# - name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
+#   ansible.builtin.command:
+#     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
+#     stdin: "{{ bitwarden_master_password.user_input }}"
+#   become: true
+#   become_user: "{{ bitwarden_user_name }}"
+#   when: login_unlock_result is changed
 
