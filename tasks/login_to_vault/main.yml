@@ -16,6 +16,7 @@
   ansible.builtin.pause:
     prompt: "Enter the Bitwarden user master password"
     echo: true
+    minutes: 5
   register: bitwarden_master_password
   when: login_unlock_result is changed
 
