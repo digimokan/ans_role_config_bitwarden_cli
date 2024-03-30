@@ -131,6 +131,9 @@ PrintUsage() {
   printf "    1  usage, arguments, or options error\n"
   printf "    5  Bitwarden CLI operation error\n"
   printf "   10  Bitwarden CLI vault login/unlock error\n"
+  printf "   11  Bitwarden vault status: logged in, locked\n"
+  printf "   12  Bitwarden vault status: logged out, unlocked\n"
+  printf "   13  Bitwarden vault status: logged out, locked\n"
   printf "   80  jq/fzf error parsing text received from vault\n"
   printf "  120  xsel error copying text to clipboard\n"
   printf "  255  unknown error\n"
@@ -744,6 +747,14 @@ DoCheckLoginAndUnlock() {
   fi
 
   printf "Vault status: %s, %s.\n" "${login_status}" "${vault_status}"
+
+  if [ "${login_status}" = 'logged in' ] && [ "${vault_status}" = 'locked' ]; then
+    exit 11
+  elif [ "${login_status}" = 'logged out' ] && [ "${vault_status}" = 'unlocked' ]; then
+    exit 12
+  elif [ "${login_status}" = 'logged out' ] && [ "${vault_status}" = 'locked' ]; then
+    exit 13
+  fi
 }
 
 # MAIN SCRIPT:
