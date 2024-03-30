@@ -12,15 +12,11 @@
   become: true
   become_user: "{{ bitwarden_user_name }}"
 
-- name: "Prompt and set new user 'test' password"
-  block:
-    - name: "Get user 'test' password, via shell prompt"
-      ansible.builtin.pause:
-        prompt: "Enter the new password for user 'test'"
-        echo: true
-      register: new_password
-      become: true
-      become_user: 'root'
+- name: "Get user 'test' password, via shell prompt"
+  ansible.builtin.pause:
+    prompt: "Enter the new password for user 'test'"
+    echo: true
+  register: new_password
 
 # - name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
 #   ansible.builtin.pause:
