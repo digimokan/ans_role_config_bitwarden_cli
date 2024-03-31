@@ -4,34 +4,32 @@
 #   ansible not waiting for response to prompt as stdin is not interactive
 
 
-# - name: "Check if user '{{ bitwarden_user_name }}' logged in to Bitwarden vault, and vault unlocked"
-#   ansible.builtin.command:
-#     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --check-login-and-unlock"
-#   register: login_unlock_result
-#   changed_when: (login_unlock_result.rc == 11) or
-#                 (login_unlock_result.rc == 12) or
-#                 (login_unlock_result.rc == 13)
-#   failed_when: (login_unlock_result.rc != 0) and
-#                (login_unlock_result.rc != 11) and
-#                (login_unlock_result.rc != 12) and
-#                (login_unlock_result.rc != 13)
-#   become: true
-#   become_user: "{{ bitwarden_user_name }}"
+- name: "Check if user '{{ bitwarden_user_name }}' logged in to Bitwarden vault, and vault unlocked"
+  ansible.builtin.command:
+    cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --check-login-and-unlock"
+  register: login_unlock_result
+  changed_when: (login_unlock_result.rc == 11) or
+                (login_unlock_result.rc == 12) or
+                (login_unlock_result.rc == 13)
+  failed_when: (login_unlock_result.rc != 0) and
+               (login_unlock_result.rc != 11) and
+               (login_unlock_result.rc != 12) and
+               (login_unlock_result.rc != 13)
+  become: true
+  become_user: "{{ bitwarden_user_name }}"
 
 - name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
-  # ansible.builtin.pause:
-  pause:
+  ansible.builtin.pause:
     prompt: "Enter the Bitwarden user master password"
     echo: true
-    # seconds: 30
-  # register: bitwarden_master_password
-  # when: login_unlock_result is changed
+  register: bitwarden_master_password
+  when: login_unlock_result is changed
 
-# - name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
-#   ansible.builtin.command:
-#     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
-#     stdin: "{{ bitwarden_master_password.user_input }}"
-#   become: true
-#   become_user: "{{ bitwarden_user_name }}"
-#   when: login_unlock_result is changed
+- name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
+  ansible.builtin.command:
+    cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
+    stdin: "{{ bitwarden_master_password.user_input }}"
+  become: true
+  become_user: "{{ bitwarden_user_name }}"
+  when: login_unlock_result is changed
 
