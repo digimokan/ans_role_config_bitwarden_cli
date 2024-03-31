@@ -15,7 +15,7 @@
 - name: "Get user 'test' password, via shell prompt"
   ansible.builtin.pause:
     prompt: "Enter the new password for user 'test'"
-    minutes: 'None'
+    # minutes: 'None'
     seconds: 'None'
     echo: true
   register: new_password
