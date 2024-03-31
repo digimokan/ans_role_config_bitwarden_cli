@@ -24,7 +24,7 @@
     prompt: "Enter the Bitwarden user master password"
     echo: true
     # seconds: 30
-  register: bitwarden_master_password
+  # register: bitwarden_master_password
   # when: login_unlock_result is changed
 
 # - name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
