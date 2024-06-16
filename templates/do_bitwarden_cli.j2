@@ -562,7 +562,7 @@ PrintAllCustomFields() {
   if [ "${Received_Entry_Field}" != 'null' ]; then
     all_custom_fields="$(printf "%s" "${Received_Entry_Field}" | "${_Jq_Cmd}" --raw-output ".[]")"
     QuitIfRcNot0 "${?}" "jq error extracting all_custom_fields 'fields'" 80
-    printf "%s" "${all_custom_fields}" | "{_Jq_Cmd}" --raw-output "[.name, .value] | @tsv" | while IFS="$(printf '\t.')" read -r field_name field_value; do
+    printf "%s" "${all_custom_fields}" | "${_Jq_Cmd}" --raw-output "[.name, .value] | @tsv" | while IFS="$(printf '\t.')" read -r field_name field_value; do
       entry_label="${field_name}:"
       Received_Entry_Field="${field_value}"
       PrintReceivedEntryFieldLines "${entry_label}" "${num_chars_to_indent}"
