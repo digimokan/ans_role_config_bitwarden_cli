@@ -15,15 +15,24 @@
 # GLOBAL VARS:
 
 # Hard-Coded Settings
-readonly _Prog_Name="$(basename "${0}")"
-readonly _Jq_Cmd="{{ bitwarden_cli_exec_jq_cmd }}"
-readonly _Xsel_Cmd="{{ bitwarden_cli_exec_xsel_cmd }}"
-readonly _Fzf_Cmd="{{ bitwarden_cli_exec_fzf_cmd }}"
-readonly _Default_Login_Entry_Field_Selection='password'
-readonly _Default_Card_Entry_Field_Selection='card-number'
-readonly _Default_Identity_Entry_Field_Selection='ssn'
-readonly _Default_Secure_Note_Entry_Field_Selection='notes'
-readonly _Bitwarden_User_Name='{{ bitwarden_user_name }}'
+_Prog_Name="$(basename "${0}")"
+readonly _Prog_Name
+_Jq_Cmd="{{ bitwarden_cli_exec_jq_cmd }}"
+readonly _Jq_Cmd
+_Xsel_Cmd="{{ bitwarden_cli_exec_xsel_cmd }}"
+readonly _Xsel_Cmd
+_Fzf_Cmd="{{ bitwarden_cli_exec_fzf_cmd }}"
+readonly _Fzf_Cmd
+_Default_Login_Entry_Field_Selection='password'
+readonly _Default_Login_Entry_Field_Selection
+_Default_Card_Entry_Field_Selection='card-number'
+readonly _Default_Card_Entry_Field_Selection
+_Default_Identity_Entry_Field_Selection='ssn'
+readonly _Default_Identity_Entry_Field_Selection
+_Default_Secure_Note_Entry_Field_Selection='notes'
+readonly _Default_Secure_Note_Entry_Field_Selection
+_Bitwarden_User_Name='{{ bitwarden_user_name }}'
+readonly _Bitwarden_User_Name
 
 # User Cmd Option Selections
 Print_Help_Menu='false'
@@ -43,15 +52,24 @@ Login_Api_Key_Client_Secret='{{ bitwarden_cli_api_key_client_secret }}'
 Session_Key_Save_File_Path='/home/{{ bitwarden_user_name }}/.local/state/bitwarden/session_key.txt'
 
 # Bitwarden CLI Cmds
-readonly _Bw_Cli_Cmd='bw'
-readonly _Bw_Redir_Devnull='1> /dev/null 2>&1'
-readonly _Bw_Login_Check_Cmd="${_Bw_Cli_Cmd} login --check ${_Bw_Redir_Devnull}"
-readonly _Bw_Unlock_Check_Cmd_Prefix="${_Bw_Cli_Cmd} unlock --check --session"
-readonly _Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
-readonly _Bw_Entry_Type_Login='1'
-readonly _Bw_Entry_Type_Secure_Note='2'
-readonly _Bw_Entry_Type_Card='3'
-readonly _Bw_Entry_Type_Identity='4'
+_Bw_Cli_Cmd='bw'
+readonly _Bw_Cli_Cmd
+_Bw_Redir_Devnull='1> /dev/null 2>&1'
+readonly _Bw_Redir_Devnull
+_Bw_Login_Check_Cmd="${_Bw_Cli_Cmd} login --check ${_Bw_Redir_Devnull}"
+readonly _Bw_Login_Check_Cmd
+_Bw_Unlock_Check_Cmd_Prefix="${_Bw_Cli_Cmd} unlock --check --session"
+readonly _Bw_Unlock_Check_Cmd_Prefix
+_Bw_Unlock_Check_Cmd_Suffix="${_Bw_Redir_Devnull}"
+readonly _Bw_Unlock_Check_Cmd_Suffix
+_Bw_Entry_Type_Login='1'
+readonly _Bw_Entry_Type_Login
+_Bw_Entry_Type_Secure_Note='2'
+readonly _Bw_Entry_Type_Secure_Note
+_Bw_Entry_Type_Card='3'
+readonly _Bw_Entry_Type_Card
+_Bw_Entry_Type_Identity='4'
+readonly _Bw_Entry_Type_Identity
 
 # LOCAL FUNCTIONS:
 
