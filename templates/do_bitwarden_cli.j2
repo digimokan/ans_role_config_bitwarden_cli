@@ -523,24 +523,40 @@ GetReceivedEntryFieldFromUserSelectedEntry() {
   QuitIfRcNot0 "${?}" "jq error extracting Received_Entry_Field" 80
 }
 
+IndentFollowOnFieldLines() {
+  entry_label="${1}"
+
+  entry_label_len="$(printf "%s" "${entry_label}" | wc -c)"
+  num_chars_to_indent=$((entry_label_len + 1))
+
+  i=0
+  while [ "${i}" -lt "${num_chars_to_indent}" ]; do
+    printf " "
+    i=$((i + 1))
+  done
+}
+
 PrintReceivedEntryFieldLines() {
   entry_label="${1}"
   num_chars_to_indent="${2}"
 
   if [ "${Received_Entry_Field}" != 'null' ]; then
     first_line='true'
-    printf "%s\n" "${Received_Entry_Field}" | while IFS= read -r entry_text_line; do
+    # printf "%s\n" "${Received_Entry_Field}" | while IFS= read -r entry_text_line; do
+    printf "%s\n" "${Received_Entry_Field}" | while IFS="$(printf "\n.")" read -r entry_text_line; do
       if [ "${first_line}" = 'true' ]; then
-        printf "%s %s\n" "${entry_label}" "${entry_text_line}"
+        # printf "%s %s\n" "${entry_label}" "${entry_text_line}"
+        printf "%s" "${entry_label}"
         first_line='false'
       else
-        i=0
-        while [ "${i}" -lt "${num_chars_to_indent}" ]; do
-          printf " "
-          i=$((i + 1))
-        done
-        printf " %s\n" "${entry_text_line}"
+        IndentFollowOnFieldLines "${entry_label}"
+        # i=0
+        # while [ "${i}" -lt "${num_chars_to_indent}" ]; do
+        #   printf " "
+        #   i=$((i + 1))
+        # done
       fi
+      printf " %s\n" "${entry_text_line}"
     done
   fi
 }
