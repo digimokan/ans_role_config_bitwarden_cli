@@ -565,10 +565,11 @@ IndentFollowOnFieldLines() {
 
 PrintReceivedEntryFieldLines() {
   entry_label="${1}"
+  entry_value="${2}"
 
-  if [ "${Received_Entry_Field}" != 'null' ]; then
+  if [ "${entry_value}" != 'null' ]; then
     first_line='true'
-    printf "%s\n" "${Received_Entry_Field}" | while IFS="$(printf "\n.")" read -r entry_text_line; do
+    printf "%s\n" "${entry_value}" | while IFS="$(printf "\n.")" read -r entry_text_line; do
       if [ "${first_line}" = 'true' ]; then
         printf "%s" "${entry_label}"
         first_line='false'
@@ -585,7 +586,7 @@ PrintEntryFieldIfNotNull() {
   entry_json="${2}"
 
   GetReceivedEntryFieldFromUserSelectedEntry "${entry_json}"
-  PrintReceivedEntryFieldLines "${entry_label}"
+  PrintReceivedEntryFieldLines "${entry_label}" "${Received_Entry_Field}"
 }
 
 PrintAllCustomFields() {
@@ -598,13 +599,13 @@ PrintAllCustomFields() {
     QuitIfRcNot0 "${?}" "jq error extracting custom field name and value" 80
     printf "%s\n" "${target_fields}" | while IFS="$(printf '\t.')" read -r field_name field_value; do
       entry_label="${field_name}:"
-      Received_Entry_Field="${field_value}"
-      PrintReceivedEntryFieldLines "${entry_label}"
+      entry_value="${field_value}"
+      PrintReceivedEntryFieldLines "${entry_label}" "${entry_value}"
     done
   fi
 }
 
-PrintEntryReceivedFromLocalVault() {
+PrintAllFields() {
   PrintEntryFieldIfNotNull "NAME:" ".name"
 
   if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Login}" ]; then
@@ -645,6 +646,18 @@ PrintEntryReceivedFromLocalVault() {
 
   PrintAllCustomFields
   PrintEntryFieldIfNotNull "NOTE:" ".notes"
+}
+
+PrintOnlySelectedField() {
+  printf "%s" "${Received_Entry_Field}"
+}
+
+PrintEntryReceivedFromLocalVault() {
+  if [ "${User_Field_Selection}" = 'default' ]; then
+    PrintAllFields
+  else
+    PrintOnlySelectedField
+  fi
 }
 
 CheckSelectedEntryFieldIsValidForEntryType() {
@@ -758,9 +771,10 @@ DoPrintEntryAndCopyField() {
   SyncLocalVaultFromServerVault "$@"
   GetEntryFromLocalVault "$@"
   GetReceivedEntryTypeFromUserSelectedEntry "$@"
-  PrintEntryReceivedFromLocalVault "$@"
   CheckSelectedEntryFieldIsValidForEntryType "$@"
   GetSelectedEntryFieldFromReceivedEntry "$@"
+
+  PrintEntryReceivedFromLocalVault "$@"
   CopySelectedFieldToClipboard "$@"
 }
 
@@ -769,6 +783,9 @@ DoPrintEntry() {
   SyncLocalVaultFromServerVault "$@"
   GetEntryFromLocalVault "$@"
   GetReceivedEntryTypeFromUserSelectedEntry "$@"
+  CheckSelectedEntryFieldIsValidForEntryType "$@"
+  GetSelectedEntryFieldFromReceivedEntry "$@"
+
   PrintEntryReceivedFromLocalVault "$@"
 }
 
@@ -779,6 +796,7 @@ DoCopyEntryField() {
   GetReceivedEntryTypeFromUserSelectedEntry "$@"
   CheckSelectedEntryFieldIsValidForEntryType "$@"
   GetSelectedEntryFieldFromReceivedEntry "$@"
+
   CopySelectedFieldToClipboard "$@"
 }
 
