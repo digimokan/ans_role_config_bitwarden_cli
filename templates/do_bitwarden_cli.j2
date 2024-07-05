@@ -663,40 +663,48 @@ PrintEntryReceivedFromLocalVault() {
 CheckSelectedEntryFieldIsValidForEntryType() {
   if [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Login}" ]; then
     if [ "${User_Field_Selection}" = 'default' ]; then
-      User_Field_Selection="${_Default_Login_Entry_Field_Selection}"
-    elif [ "${User_Field_Selection}" != 'username' ] && \
-         [ "${User_Field_Selection}" != 'password' ] && \
-         [ "${User_Field_Selection}" != 'web-uri' ] && \
-         [ "${User_Field_Selection}" != 'custom' ] && \
-         [ "${User_Field_Selection}" != 'notes' ]; then
+      Selected_Field_Name="${_Default_Login_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" = 'username' ] || \
+         [ "${User_Field_Selection}" = 'password' ] || \
+         [ "${User_Field_Selection}" = 'web-uri' ] || \
+         [ "${User_Field_Selection}" = 'custom' ] || \
+         [ "${User_Field_Selection}" = 'notes' ]; then
+      Selected_Field_Name="${User_Field_Selection}"
+    else
       QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
     fi
   elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Card}" ]; then
     if [ "${User_Field_Selection}" = 'default' ]; then
-      User_Field_Selection="${_Default_Card_Entry_Field_Selection}"
-    elif [ "${User_Field_Selection}" != 'cardholder-name' ] && \
-         [ "${User_Field_Selection}" != 'card-number' ] && \
-         [ "${User_Field_Selection}" != 'card-security-code' ] && \
-         [ "${User_Field_Selection}" != 'custom' ] && \
-         [ "${User_Field_Selection}" != 'notes' ]; then
-      QuitErrMsg "Invalid field selected for entry of type \"Card\"" 1
+      Selected_Field_Name="${_Default_Card_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" = 'cardholder-name' ] || \
+         [ "${User_Field_Selection}" = 'card-number' ] || \
+         [ "${User_Field_Selection}" = 'card-security-code' ] || \
+         [ "${User_Field_Selection}" = 'custom' ] || \
+         [ "${User_Field_Selection}" = 'notes' ]; then
+      Selected_Field_Name="${User_Field_Selection}"
+    else
+      QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
     fi
   elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Identity}" ]; then
     if [ "${User_Field_Selection}" = 'default' ]; then
-      User_Field_Selection="${_Default_Identity_Entry_Field_Selection}"
-    elif [ "${User_Field_Selection}" != 'ssn' ] && \
-         [ "${User_Field_Selection}" != 'passport-number' ] && \
-         [ "${User_Field_Selection}" != 'drivers-license-number' ] && \
-         [ "${User_Field_Selection}" != 'custom' ] && \
-         [ "${User_Field_Selection}" != 'notes' ]; then
-      QuitErrMsg "Invalid field selected for entry of type \"Identity\"" 1
+      Selected_Field_Name="${_Default_Identity_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" = 'ssn' ] || \
+         [ "${User_Field_Selection}" = 'passport-number' ] || \
+         [ "${User_Field_Selection}" = 'drivers-license-number' ] || \
+         [ "${User_Field_Selection}" = 'custom' ] || \
+         [ "${User_Field_Selection}" = 'notes' ]; then
+      Selected_Field_Name="${User_Field_Selection}"
+    else
+      QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
     fi
   elif [ "${Received_Entry_Type}" = "${_Bw_Entry_Type_Secure_Note}" ]; then
     if [ "${User_Field_Selection}" = 'default' ]; then
-      User_Field_Selection="${_Default_Secure_Note_Entry_Field_Selection}"
-    elif [ "${User_Field_Selection}" != 'custom' ] && \
-         [ "${User_Field_Selection}" != 'notes' ]; then
-      QuitErrMsg "Invalid field selected for entry of type \"Notes\"" 1
+      Selected_Field_Name="${_Default_Secure_Note_Entry_Field_Selection}"
+    elif [ "${User_Field_Selection}" = 'custom' ] || \
+         [ "${User_Field_Selection}" = 'notes' ]; then
+      Selected_Field_Name="${User_Field_Selection}"
+    else
+      QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
     fi
   else
     QuitErrMsg "Unknown entry type received from Bitwarden server" 255
@@ -704,27 +712,27 @@ CheckSelectedEntryFieldIsValidForEntryType() {
 }
 
 GetSelectedEntryFieldFromReceivedEntry() {
-  if [ "${User_Field_Selection}" = 'username' ]; then
+  if [ "${Selected_Field_Name}" = 'username' ]; then
     entry_field_json='.login.username'
-  elif [ "${User_Field_Selection}" = 'password' ]; then
+  elif [ "${Selected_Field_Name}" = 'password' ]; then
     entry_field_json='.login.password'
-  elif [ "${User_Field_Selection}" = 'web-uri' ]; then
+  elif [ "${Selected_Field_Name}" = 'web-uri' ]; then
     entry_field_json='.login.uris[0].uri'
-  elif [ "${User_Field_Selection}" = 'cardholder-name' ]; then
+  elif [ "${Selected_Field_Name}" = 'cardholder-name' ]; then
     entry_field_json='.card.cardholderName'
-  elif [ "${User_Field_Selection}" = 'card-number' ]; then
+  elif [ "${Selected_Field_Name}" = 'card-number' ]; then
     entry_field_json='.card.number'
-  elif [ "${User_Field_Selection}" = 'card-security-code' ]; then
+  elif [ "${Selected_Field_Name}" = 'card-security-code' ]; then
     entry_field_json='.card.code'
-  elif [ "${User_Field_Selection}" = 'ssn' ]; then
+  elif [ "${Selected_Field_Name}" = 'ssn' ]; then
     entry_field_json='.identity.ssn'
-  elif [ "${User_Field_Selection}" = 'passport-number' ]; then
+  elif [ "${Selected_Field_Name}" = 'passport-number' ]; then
     entry_field_json='.identity.passportNumber'
-  elif [ "${User_Field_Selection}" = 'drivers-license-number' ]; then
+  elif [ "${Selected_Field_Name}" = 'drivers-license-number' ]; then
     entry_field_json='.identity.licenseNumber'
-  elif [ "${User_Field_Selection}" = 'custom' ]; then
+  elif [ "${Selected_Field_Name}" = 'custom' ]; then
     entry_field_json='.fields'
-  elif [ "${User_Field_Selection}" = 'notes' ]; then
+  elif [ "${Selected_Field_Name}" = 'notes' ]; then
     entry_field_json='.notes'
   else
     QuitErrMsg "uknown mapping of user-selected field to field json" 255
@@ -735,7 +743,7 @@ GetSelectedEntryFieldFromReceivedEntry() {
       "${_Jq_Cmd}" --raw-output "${entry_field_json}")"
   QuitIfRcNot0 "${?}" "jq error extracting selected field from received entry" 80
 
-  if [ "${User_Field_Selection}" = 'custom' ]; then
+  if [ "${Selected_Field_Name}" = 'custom' ]; then
     Received_Entry_Field="$(
       printf "%s" "${extracted_field}" | \
         "${_Jq_Cmd}" --raw-output ".[] | \
@@ -750,7 +758,7 @@ GetSelectedEntryFieldFromReceivedEntry() {
 }
 
 CopySelectedFieldToClipboard() {
-  printf "Copying entry \"%s\" field to clipboard..." "${User_Field_Selection}"
+  printf "Copying entry \"%s\" field to clipboard..." "${Selected_Field_Name}"
   printf "%s" "${Received_Entry_Field}" | "${_Xsel_Cmd}" --input --clipboard
   QuitIfRcNot0 "${?}" "xsel error copying text to clipboard " 120
 }
