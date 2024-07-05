@@ -653,8 +653,8 @@ CheckSelectedEntryFieldIsValidForEntryType() {
       User_Field_Selection="${_Default_Login_Entry_Field_Selection}"
     elif [ "${User_Field_Selection}" != 'username' ] && \
          [ "${User_Field_Selection}" != 'password' ] && \
-         [ "${User_Field_Selection}" != 'web-uri' ]  && \
-         [ "${User_Field_Selection}" != 'custom' ]  && \
+         [ "${User_Field_Selection}" != 'web-uri' ] && \
+         [ "${User_Field_Selection}" != 'custom' ] && \
          [ "${User_Field_Selection}" != 'notes' ]; then
       QuitErrMsg "Invalid field selected for entry of type \"Login\"" 1
     fi
@@ -664,7 +664,7 @@ CheckSelectedEntryFieldIsValidForEntryType() {
     elif [ "${User_Field_Selection}" != 'cardholder-name' ] && \
          [ "${User_Field_Selection}" != 'card-number' ] && \
          [ "${User_Field_Selection}" != 'card-security-code' ] && \
-         [ "${User_Field_Selection}" != 'custom' ]  && \
+         [ "${User_Field_Selection}" != 'custom' ] && \
          [ "${User_Field_Selection}" != 'notes' ]; then
       QuitErrMsg "Invalid field selected for entry of type \"Card\"" 1
     fi
@@ -674,7 +674,7 @@ CheckSelectedEntryFieldIsValidForEntryType() {
     elif [ "${User_Field_Selection}" != 'ssn' ] && \
          [ "${User_Field_Selection}" != 'passport-number' ] && \
          [ "${User_Field_Selection}" != 'drivers-license-number' ] && \
-         [ "${User_Field_Selection}" != 'custom' ]  && \
+         [ "${User_Field_Selection}" != 'custom' ] && \
          [ "${User_Field_Selection}" != 'notes' ]; then
       QuitErrMsg "Invalid field selected for entry of type \"Identity\"" 1
     fi
@@ -777,7 +777,7 @@ DoCopyEntryField() {
   SyncLocalVaultFromServerVault "$@"
   GetEntryFromLocalVault "$@"
   GetReceivedEntryTypeFromUserSelectedEntry "$@"
-  CheckSelectedEntryFieldIsValidForEntryType  "$@"
+  CheckSelectedEntryFieldIsValidForEntryType "$@"
   GetSelectedEntryFieldFromReceivedEntry "$@"
   CopySelectedFieldToClipboard "$@"
 }
