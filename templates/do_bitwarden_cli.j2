@@ -728,6 +728,9 @@ GetSelectedEntryFieldFromReceivedEntry() {
         "${_Jq_Cmd}" --raw-output ".[] | \
           select(.name == \"${User_Selected_Custom_Field_Name}\").value")"
     QuitIfRcNot0 "${?}" "jq error extracting custom value from selected field" 80
+    if [ "${Received_Entry_Field}" = '' ]; then
+      QuitErrMsg "jq error could not find custom field name" 80
+    fi
   else
     Received_Entry_Field="${extracted_field}"
   fi
