@@ -542,13 +542,13 @@ GetReceivedEntryTypeFromUserSelectedEntry() {
   QuitIfRcNot0 "${?}" "jq error extracting Received_Entry_Type" 80
 }
 
-GetReceivedEntryFieldFromUserSelectedEntry() {
+GetEntryFieldToPrintFromUserSelectedEntry() {
   entry_json="${1}"
 
-  Received_Entry_Field="$(
+  Entry_Field_To_Print="$(
     printf "%s" "${User_Selected_Entry}" | \
       "${_Jq_Cmd}" --raw-output "${entry_json}")"
-  QuitIfRcNot0 "${?}" "jq error extracting Received_Entry_Field" 80
+  QuitIfRcNot0 "${?}" "jq error extracting Entry_Field_To_Print" 80
 }
 
 IndentFollowOnFieldLines() {
@@ -585,15 +585,15 @@ PrintEntryFieldIfNotNull() {
   entry_label="${1}"
   entry_json="${2}"
 
-  GetReceivedEntryFieldFromUserSelectedEntry "${entry_json}"
-  PrintReceivedEntryFieldLines "${entry_label}" "${Received_Entry_Field}"
+  GetEntryFieldToPrintFromUserSelectedEntry "${entry_json}"
+  PrintReceivedEntryFieldLines "${entry_label}" "${Entry_Field_To_Print}"
 }
 
 PrintAllCustomFields() {
-  GetReceivedEntryFieldFromUserSelectedEntry ".fields"
+  GetEntryFieldToPrintFromUserSelectedEntry ".fields"
 
-  if [ "${Received_Entry_Field}" != 'null' ]; then
-    all_custom_fields="$(printf "%s" "${Received_Entry_Field}" | "${_Jq_Cmd}" --raw-output ".[]")"
+  if [ "${Entry_Field_To_Print}" != 'null' ]; then
+    all_custom_fields="$(printf "%s" "${Entry_Field_To_Print}" | "${_Jq_Cmd}" --raw-output ".[]")"
     QuitIfRcNot0 "${?}" "jq error extracting all_custom_fields 'fields'" 80
     target_fields="$(printf "%s" "${all_custom_fields}" | "${_Jq_Cmd}" --raw-output "[.name, .value] | @tsv")"
     QuitIfRcNot0 "${?}" "jq error extracting custom field name and value" 80
