@@ -1,9 +1,3 @@
-# To-Do: re-enable and try this code when ansible.builtin.pause is working
-# on FreeBSD.
-# Currently fails with:
-#   ansible not waiting for response to prompt as stdin is not interactive
-
-
 - name: "Check if user '{{ bitwarden_user_name }}' logged in to Bitwarden vault, and vault unlocked"
   ansible.builtin.command:
     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --check-login-and-unlock"
@@ -18,17 +12,17 @@
   become: true
   become_user: "{{ bitwarden_user_name }}"
 
-- name: "Get user '{{ bitwarden_user_name }}' Bitwarden master password, via shell prompt"
-  ansible.builtin.pause:
-    prompt: "Enter the Bitwarden user master password"
-    echo: true
-  register: bitwarden_master_password
+- name: "Not logged-in-and-vault-unlocked, so check bitwarden_master_password is defined"
+  ansible.builtin.assert:
+    that: bitwarden_master_password is defined
+    fail_msg: "bitwarden_master_password var must be defined"
+    quiet: true
   when: login_unlock_result is changed
 
 - name: "Use user '{{ bitwarden_user_name }}' Bitwarden master password to log in and unlock vault"
   ansible.builtin.command:
     cmd: "{{ bitwarden_cli_utility_script_main_cmd }} --login-to-vault-and-unlock"
-    stdin: "{{ bitwarden_master_password.user_input }}"
+    stdin: "{{ bitwarden_master_password }}"
   become: true
   become_user: "{{ bitwarden_user_name }}"
   when: login_unlock_result is changed

@@ -81,6 +81,10 @@ Define these _required_ vars for the role:
   * `bitwarden_user_name`: user name of main Bitwarden user
   * `bitwarden_check_freebsd_linux_compat_cmd`: check linux compat (for FreeBSD)
 
+Define these _conditionally-required_ vars, as needed:
+
+  * `bitwarden_master_password`: required when not logged in, vault not unlocked
+
 ## Contributing
 
 * Feel free to report a bug or propose a feature by opening a new
