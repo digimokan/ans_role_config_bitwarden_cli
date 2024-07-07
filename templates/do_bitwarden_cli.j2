@@ -758,9 +758,22 @@ GetSelectedEntryFieldFromReceivedEntry() {
 }
 
 CopySelectedFieldToClipboard() {
-  if [ "${User_Field_Selection}" = 'default' ]; then
-    printf "Copying entry \"%s\" field to clipboard..." "${Selected_Field_Name}"
+  copying_msg="Copying entry \"${Selected_Field_Name}\" field to clipboard..."
+
+  if [ "${Print_Entry}" = 'false' ] && \
+     [ "${User_Field_Selection}" != 'default' ]; then
+    printf "%s" "${copying_msg}"
+  elif [ "${Print_Entry}" = 'false' ] && \
+       [ "${User_Field_Selection}" = 'default' ]; then
+    printf "%s" "${copying_msg}"
+  elif [ "${Print_Entry}" = 'true' ] && \
+       [ "${User_Field_Selection}" != 'default' ]; then
+    printf "\n%s" "${copying_msg}"
+  elif [ "${Print_Entry}" = 'true' ] && \
+       [ "${User_Field_Selection}" = 'default' ]; then
+    printf "%s" "${copying_msg}"
   fi
+
   printf "%s" "${Received_Entry_Field}" | "${_Xsel_Cmd}" --input --clipboard
   QuitIfRcNot0 "${?}" "xsel error copying text to clipboard " 120
 }
