@@ -649,7 +649,7 @@ PrintAllFields() {
 }
 
 PrintOnlySelectedField() {
-  printf "%s" "${Received_Entry_Field}"
+  printf "%s\n" "${Received_Entry_Field}"
 }
 
 PrintEntryReceivedFromLocalVault() {
@@ -758,22 +758,13 @@ GetSelectedEntryFieldFromReceivedEntry() {
 }
 
 CopySelectedFieldToClipboard() {
-  copying_msg="Copying entry \"${Selected_Field_Name}\" field to clipboard..."
-
-  if [ "${Print_Entry}" = 'false' ] && \
-     [ "${User_Field_Selection}" != 'default' ]; then
-    printf "%s" "${copying_msg}"
-  elif [ "${Print_Entry}" = 'false' ] && \
-       [ "${User_Field_Selection}" = 'default' ]; then
-    printf "%s" "${copying_msg}"
-  elif [ "${Print_Entry}" = 'true' ] && \
-       [ "${User_Field_Selection}" != 'default' ]; then
-    printf "\n%s" "${copying_msg}"
-  elif [ "${Print_Entry}" = 'true' ] && \
-       [ "${User_Field_Selection}" = 'default' ]; then
-    printf "%s" "${copying_msg}"
+  if [ "${Selected_Field_Name}" = 'custom' ]; then
+    field_name="${User_Selected_Custom_Field_Name}"
+  else
+    field_name="${Selected_Field_Name}"
   fi
 
+  printf "Copying entry \"%s\" field to clipboard...\n" "${field_name}"
   printf "%s" "${Received_Entry_Field}" | "${_Xsel_Cmd}" --input --clipboard
   QuitIfRcNot0 "${?}" "xsel error copying text to clipboard " 120
 }
