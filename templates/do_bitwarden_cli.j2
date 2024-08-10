@@ -529,19 +529,22 @@ GetEntryFromLocalVault() {
   QuitIfRcNot0 "${?}" "Bitwarden CLI error getting entries from BW server" 5
 
   if [ "${No_Interactive_Search}" = 'true' ]; then
-    user_selected_entry_name="${Srch_Text}"
+    if [ "${Srch_Text}" = '' ]; then
+      QuitErrMsg "with --no-interactive-search, srch_text must be specified" 1
+    else
+      user_selected_entry_name="${Srch_Text}"
+    fi
   else
     user_selected_entry_name="$(
       printf "%s" "${entries_from_server}" | \
         "${_Jq_Cmd}" --raw-output ".[].name" | \
         "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
     search_exit_code="${?}"
-  fi
-
-  if [ "${user_selected_entry_name}" = '' ]; then
-    exit 0
-  else
-    QuitIfRcNot0 "${search_exit_code}" "jq/fzf error selecting entry-name from received vault entries" 80
+    if [ "${user_selected_entry_name}" = '' ]; then
+      exit 0
+    else
+      QuitIfRcNot0 "${search_exit_code}" "jq/fzf error selecting entry-name from received vault entries" 80
+    fi
   fi
 
   User_Selected_Entry="$(
