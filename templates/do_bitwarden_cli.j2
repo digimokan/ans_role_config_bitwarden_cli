@@ -44,6 +44,7 @@ Lock_Vault_And_Logout='false'
 Check_Login_And_Unlock='false'
 User_Field_Selection='default'
 Allow_Non_Default_User='false'
+No_Interactive_Search='false'
 
 # User Cmd Option Args
 Srch_Text=''
@@ -91,10 +92,11 @@ PrintUsage() {
   printf "  %s  -h\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]     [srch_text]\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -s [srch_text]\n" "${_Prog_Name}"
-  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N|-X]\n" "${leading_indent}"
+  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N|-X|-R]\n" "${leading_indent}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -p [srch_text]\n" "${_Prog_Name}"
+  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N|-X|-R]\n" "${leading_indent}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -c [srch_text]\n" "${_Prog_Name}"
-  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N|-X]\n" "${leading_indent}"
+  printf "  %s  [-U|-P|-W|-H|-B|-C|-S|-O|-L|-N|-X|-R]\n" "${leading_indent}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -l\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -x\n" "${_Prog_Name}"
   printf "  %s  [-I <id>]  [-T <sec>]  [-K <path>]  -k\n" "${_Prog_Name}"
@@ -146,6 +148,8 @@ PrintUsage() {
   printf "      session key save file path, for reboot-persistence (default \"%s\")\n" "${Session_Key_Save_File_Path}"
   printf "  -Y, --allow-non-default-user\n"
   printf "      commands should be run as user '%s', but this overrides\n" "${_Bitwarden_User_Name}"
+  printf "  -R, --no-interactive-search\n"
+  printf "      do not use srch_text search for entry interactively at terminal (useful for scripting)"
   printf "EXIT CODES:\n"
   printf "    0  ok\n"
   printf "    1  usage, arguments, or options error\n"
@@ -160,7 +164,7 @@ PrintUsage() {
 }
 
 GetCmdOpts() {
-  while getopts ':hs:p:c:lxkUPWHBCSOLNX:I:T:K:Y-:' option; do
+  while getopts ':hs:p:c:lxkUPWHBCSOLNX:I:T:K:YR-:' option; do
     short_opt_arg="${OPTARG}"
     case "${option}" in
       h)  HandlePrintHelpMenu ;;
@@ -185,6 +189,7 @@ GetCmdOpts() {
       T)  HandleLoginApiKeyClientSecret "${short_opt_arg}" ;;
       K)  HandleSessionKeySaveFilePath "${short_opt_arg}" ;;
       Y)  HandleAllowNonDefaultUser ;;
+      R)  HandleNoInteractiveSearch ;;
       -)  long_opt_name="${OPTARG}"
           long_opt_arg="${OPTARG#*=}"
           case ${long_opt_name} in
@@ -232,6 +237,8 @@ GetCmdOpts() {
             session-key-save-file-path*)    HandleMissingLongOptionArg "${long_opt_name}" ;;
             allow-non-default-user)         HandleAllowNonDefaultUser ;;
             allow-non-default-user=*)       HandleIllegalLongOptionArg "${long_opt_name}" ;;
+            no-interactive-search)          HandleNoInteractiveSearch ;;
+            no-interactive-search=*)        HandleIllegalLongOptionArg "${long_opt_name}" ;;
             '')                             break ;; # non-option arg starting with '-'
             *)                              HandleUnknownOption "${long_opt_name}" ;;
           esac ;;
@@ -441,6 +448,10 @@ HandleAllowNonDefaultUser() {
   Allow_Non_Default_User='true'
 }
 
+HandleNoInteractiveSearch() {
+  No_Interactive_Search='true'
+}
+
 QuitIfRcNot0() {
   cmd_exit_code="${1}"
   err_msg="${2}"
@@ -517,16 +528,20 @@ GetEntryFromLocalVault() {
   entries_from_server="$("${_Bw_Cli_Cmd}" list items --session "${Session_Key}")"
   QuitIfRcNot0 "${?}" "Bitwarden CLI error getting entries from BW server" 5
 
-  user_selected_entry_name="$(
-    printf "%s" "${entries_from_server}" | \
-      "${_Jq_Cmd}" --raw-output ".[].name" | \
-      "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
-  exit_code="${?}"
+  if [ "${No_Interactive_Search}" = 'true' ]; then
+    user_selected_entry_name="${Srch_Text}"
+  else
+    user_selected_entry_name="$(
+      printf "%s" "${entries_from_server}" | \
+        "${_Jq_Cmd}" --raw-output ".[].name" | \
+        "${_Fzf_Cmd}" --query="${Srch_Text}" --select-1 --reverse)"
+    search_exit_code="${?}"
+  fi
 
   if [ "${user_selected_entry_name}" = '' ]; then
     exit 0
   else
-    QuitIfRcNot0 "${exit_code}" "jq/fzf error selecting entry-name from received vault entries" 80
+    QuitIfRcNot0 "${search_exit_code}" "jq/fzf error selecting entry-name from received vault entries" 80
   fi
 
   User_Selected_Entry="$(
