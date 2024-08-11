@@ -322,7 +322,9 @@ HandlePrintEntryAndCopyField() {
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Print_Entry_And_Copy_Field='true'
-  Srch_Text="${1}"
+  if [ "${1}" != '' ]; then
+    Srch_Text="${1}"
+  fi
 }
 
 HandlePrintEntry() {
@@ -335,7 +337,9 @@ HandlePrintEntry() {
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Print_Entry='true'
-  Srch_Text="${1}"
+  if [ "${1}" != '' ]; then
+    Srch_Text="${1}"
+  fi
 }
 
 HandleCopyEntryField() {
@@ -348,7 +352,9 @@ HandleCopyEntryField() {
     QuitErrMsgWithHelp "mutually exclusive options selected" 1
   fi
   Copy_Entry_Field='true'
-  Srch_Text="${1}"
+  if [ "${1}" != '' ]; then
+    Srch_Text="${1}"
+  fi
 }
 
 HandleLoginToVaultAndUnlock() {
