@@ -1,3 +1,6 @@
+# must be set when not logged in, vault not unlocked
+bitwarden_master_password: ''
+
 # the role will create a Bitwarden CLI utility script with this name
 bitwarden_cli_utility_script_main_cmd: 'do_bitwarden_cli.sh'
 

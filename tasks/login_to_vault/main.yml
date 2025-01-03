@@ -12,10 +12,10 @@
   become: true
   become_user: "{{ bitwarden_user_name }}"
 
-- name: "Not logged-in-and-vault-unlocked, so check bitwarden_master_password is defined"
+- name: "Not logged-in-and-vault-unlocked, so check bitwarden_master_password is not empty string"
   ansible.builtin.assert:
-    that: bitwarden_master_password is defined
-    fail_msg: "bitwarden_master_password var must be defined"
+    that: bitwarden_master_password | length > 0
+    fail_msg: "bitwarden_master_password var must be set"
     quiet: true
   when: login_unlock_result is changed
 
