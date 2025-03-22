@@ -531,7 +531,7 @@ SyncLocalVaultFromServerVault() {
 }
 
 GetEntryFromLocalVault() {
-  entries_from_server="$("${_Bw_Cli_Cmd}" list items --session "${Session_Key}")"
+  entries_from_server="$("${_Bw_Cli_Cmd}" list items --session "${Session_Key}" 2> /dev/null)"
   QuitIfRcNot0 "${?}" "Bitwarden CLI error getting entries from BW server" 5
 
   if [ "${No_Interactive_Search}" = 'true' ]; then
