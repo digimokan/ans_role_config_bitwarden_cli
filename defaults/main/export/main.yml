@@ -1,0 +1,3 @@
+# the role will create a Bitwarden CLI utility script with this name
+bitwarden_cli_utility_script_main_cmd: 'do_bitwarden_cli.sh'
+

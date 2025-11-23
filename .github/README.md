@@ -61,6 +61,7 @@ Install and configure the Bitwarden CLI password manager utility.
        - name: "Install and configure the Bitwarden CLI password manager utility"
          ansible.builtin.include_role:
            name: ans_role_config_bitwarden_cli
+           public: true
          vars:
            bitwarden_user_name: "user2"
            bitwarden_cli_api_key_client_id: "some-api-key-client-id"
@@ -72,14 +73,13 @@ Install and configure the Bitwarden CLI password manager utility.
 
 ## Role Options
 
-See the role `defaults` files for main role vars listings:
+Vars that must be defined when including the role in the playbook:
 
-  * [defaults](../defaults/main/)
+  * [dependencies](../defaults/main/dependencies/main.yml)
 
-Define these _required_ vars for the role:
+Vars defined by this role, exported with `public: true`, for use in other roles:
 
-  * `bitwarden_user_name`: user name of main Bitwarden user
-  * `bitwarden_check_freebsd_linux_compat_cmd`: check linux compat (for FreeBSD)
+  * [export](../defaults/main/export/main.yml)
 
 ## Contributing
 

@@ -1,0 +1,24 @@
+# name of main bitwarden user
+bitwarden_user_name: 'user2'
+
+# command to run to check that Linux-Compat runs successfully (req for FreeBSD)
+bitwarden_check_freebsd_linux_compat_cmd: 'false'
+
+# command to run to execute the jq json-parsing utility
+bitwarden_cli_exec_jq_cmd: 'false'
+
+# command to run to execute the xsel clipboard utility
+bitwarden_cli_exec_xsel_cmd: 'false'
+
+# command to run to execute the fzf fuzzy-finder utility
+bitwarden_cli_exec_fzf_cmd: 'false'
+
+# must be set when not logged in, vault not unlocked
+bitwarden_master_password: ''
+
+# Bitwarden user API Key Client ID, req for login (obtain on Bitwarden website)
+bitwarden_cli_api_key_client_id: ''
+
+# Bitwarden user API Key Client Secret, req for login (obtain on Bitwarden website)
+bitwarden_cli_api_key_client_secret: ''
+
